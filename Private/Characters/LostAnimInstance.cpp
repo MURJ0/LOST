@@ -4,15 +4,6 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-// QJ kur ceco!!!
-// AMA NAJ MNOGO GO QDE STIVO !!!
-
-
-
-
-
-
-
 void ULostAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
@@ -32,5 +23,7 @@ void ULostAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		GroundSpeed = UKismetMathLibrary::VSizeXY(LostCharacterMovement->Velocity);
 		IsFalling = LostCharacterMovement->IsFalling();
 		CharacterState = LostCharacter->GetCharacterState();
+		ActionState = LostCharacter->GetActionState();
+		LostDeathPose = LostCharacter->GetLostDeathPose();
 	}
 }

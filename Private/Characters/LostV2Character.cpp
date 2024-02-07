@@ -17,6 +17,7 @@
 #include "Item/Weapons/Weapon.h"
 #include "Item/Item.h"
 #include "Animation/AnimMontage.h"
+#include <Enemy/Enemy.h>
 
 ALostV2Character::ALostV2Character()
 {
@@ -208,15 +209,31 @@ void ALostV2Character::GetHit_Implementation(const FVector& ImpactPoint)
 	PlayHitParticle(ImpactPoint);
 
 
-	if (IsAlive()) // Check if Hitter is valid and not the player character itself
-	{
+	if (IsAlive()) { // Check if Hitter is valid and not the player character itself
 		DireactionalHitReact(ImpactPoint);
+		ActionState = EActionState::EAS_HitReaction;
 	}
-
-	ActionState = EActionState::EAS_HitReaction;
+	else {
+		Die();
+	}
 
 	if (EquippedWeapon) {
 		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void ALostV2Character::Die()
+{
+	ActionState = EActionState::EAS_Dead;
+	LostDeathPose = ELostDeathPose::ELDP_Death1;
+
+	UAnimInstance *AnimInstance = GetMesh()->GetAnimInstance();
+
+	Tags.Add(FName("Dead"));
+
+	if (AnimInstance && DeathMontage) {
+		AnimInstance->Montage_Play(DeathMontage);
+		AnimInstance->Montage_JumpToSection(TEXT("Death1"), DeathMontage);
 	}
 }
 

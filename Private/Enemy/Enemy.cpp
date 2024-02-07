@@ -209,6 +209,10 @@ void AEnemy::Attack()
 	//	return; // Skip attack() if the enemy got hit 
 	//}
 
+	if (CombatTarget->ActorHasTag(TEXT("Enemy"))) {
+		return;
+	}
+
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (IsRightHandWeaponOneHanded() && !LeftHandEquippedWeapon) {
 		PlayMontage(AnimInstance, AttackMontage, TEXT("OneHandCombo"));

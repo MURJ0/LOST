@@ -1,5 +1,6 @@
 #pragma once
 
+// ECHO ENUMS
 UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {
@@ -13,7 +14,17 @@ enum class EActionState : uint8
 	EAS_Unoccupied UMETA(DisplayName = "Unoccupied"),
 	EAS_HitReaction UMETA(DisplayName = "EAS_HitReaction"),
 	EAS_Attacking UMETA(DisplayName = "Attacking"),
+	EAS_Dead UMETA(DisplayName = "Dead"),
 };
+
+UENUM(BlueprintType)
+enum class ELostDeathPose : uint8
+{
+	ELDP_Death1 UMETA(DisplayName = "Death1"),
+};
+
+
+// ENEMY ENUMS
 
 UENUM(BlueprintType)
 enum class EDeathPose : uint8 

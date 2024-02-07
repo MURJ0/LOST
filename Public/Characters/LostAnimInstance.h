@@ -7,7 +7,6 @@
 #include "CharacterTypes.h"
 #include "LostAnimInstance.generated.h"
 
-
 UCLASS()
 class LOSTV2_API ULostAnimInstance : public UAnimInstance
 {
@@ -30,4 +29,10 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Movement | Character State")
 	ECharacterState CharacterState;
+
+	UPROPERTY(BlueprintReadOnly, Category = State)
+	EActionState ActionState;
+	
+	UPROPERTY(BlueprintReadOnly, Category = State)
+	ELostDeathPose LostDeathPose;
 };

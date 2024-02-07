@@ -39,8 +39,11 @@ class LOSTV2_API ALostV2Character : public ABaseCharacter
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 
+
+
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AWeapon* EquippedWeapon;
+
 
 public:
 	ALostV2Character();
@@ -59,13 +62,18 @@ public:
 
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
-
+	FORCEINLINE ELostDeathPose GetLostDeathPose() const { return LostDeathPose; }
 protected:
 	int32 AttackCounter = 0;
 
 	bool bCanMove = true;
 
 	virtual void BeginPlay() override;
+
+	void Die();
+
+	UPROPERTY(BlueprintReadOnly, Category = "DeathPose")
+	ELostDeathPose LostDeathPose;
 
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputMappingContext* LostMappingContext;
