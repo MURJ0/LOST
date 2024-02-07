@@ -5,6 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 // QJ kur ceco!!!
+// AMA NAJ MNOGO GO QDE STIVO !!!
 
 void ULostAnimInstance::NativeInitializeAnimation()
 {
