@@ -6,6 +6,8 @@
 #include "GameFramework/HUD.h"
 #include "LostHUD.generated.h"
 
+class ULostOverlay;
+
 /**
  * 
  */
@@ -13,5 +15,11 @@ UCLASS()
 class LOSTV2_API ALostHUD : public AHUD
 {
 	GENERATED_BODY()
-	
+
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category = Lost)
+	TSubclassOf<ULostOverlay> LostOverlayClass;
 };
