@@ -7,6 +7,12 @@
 // QJ kur ceco!!!
 // AMA NAJ MNOGO GO QDE STIVO !!!
 
+
+
+
+
+
+
 void ULostAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
