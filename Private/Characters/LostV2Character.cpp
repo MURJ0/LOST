@@ -117,7 +117,7 @@ void ALostV2Character::PlayEquipMontage(FName SectionName)
 
 float LastSuccessfulAttackTime = 0.8f;
 float ComboResetTime = 2.0f; // Set the time before combo resets (in seconds)
-Д
+
 void ALostV2Character::Attack()
 {
 	if (ActionState == EActionState::EAS_Unoccupied) {

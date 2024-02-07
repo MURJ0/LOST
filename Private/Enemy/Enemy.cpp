@@ -11,6 +11,9 @@
 #include "Components/WidgetComponent.h"
 #include "HUD/HealthBarComponent.h"
 
+// qj patka
+
+
 #include "Kismet/KismetSystemLibrary.h"
 
 AEnemy::AEnemy()

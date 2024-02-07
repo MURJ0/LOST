@@ -61,7 +61,6 @@ private:
 
 	//CombatTarget and radiuses
 
-
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 1000.f;
 
