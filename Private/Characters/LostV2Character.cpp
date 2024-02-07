@@ -227,6 +227,8 @@ void ALostV2Character::Die()
 	ActionState = EActionState::EAS_Dead;
 	LostDeathPose = ELostDeathPose::ELDP_Death1;
 
+	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
+
 	UAnimInstance *AnimInstance = GetMesh()->GetAnimInstance();
 
 	Tags.Add(FName("Dead"));
