@@ -4,6 +4,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+// QJ kur ceco!!!
+
 void ULostAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
