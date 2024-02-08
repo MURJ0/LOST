@@ -19,7 +19,7 @@
 #include "Animation/AnimMontage.h"
 #include <Enemy/Enemy.h>
 
-// Test update from laptop
+// Test update from laptop v2
 
 ALostV2Character::ALostV2Character()
 {
