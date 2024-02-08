@@ -19,6 +19,8 @@
 #include "Animation/AnimMontage.h"
 #include <Enemy/Enemy.h>
 
+// Test update from laptop
+
 ALostV2Character::ALostV2Character()
 {
 	PrimaryActorTick.bCanEverTick = true;
