@@ -105,11 +105,11 @@ void ALostV2Character::EKeyPressed()
 	}
 	else if (EquippedWeapon){
 		if (ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped) {
-			PlayEquipMontage(FName("Unequip"));
+			PlayMontage(EquipUnequipMontage, FName("Unequip"));
 			CharacterState = ECharacterState::ECS_Unequipped;
 		}
 		else if (ActionState == EActionState::EAS_Unoccupied && CharacterState == ECharacterState::ECS_Unequipped && EquippedWeapon != nullptr) {
-			PlayEquipMontage(FName("Equip"));
+			PlayMontage(EquipUnequipMontage, FName("Equip"));
 			CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
 		}
 		ActionState = EActionState::EAS_Unoccupied;
@@ -240,7 +240,7 @@ void ALostV2Character::Die()
 
 	Tags.Add(FName("Dead"));
 
-	PlayMontage(DeathMontage, TEXT("Death1"));
+	PlayMontage(DeathMontage, FName("Death1"));
 }
 
 void ALostV2Character::PlayMontage(UAnimMontage *Montage, FName SectionName)
