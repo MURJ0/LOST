@@ -86,11 +86,13 @@ void ALostV2Character::Move(const FInputActionValue& Value)
 	}
 }
 
-void ALostV2Character::Jump(){
+void ALostV2Character::Jump()
+{
 	if (ActionState == EActionState::EAS_Unoccupied){
 		Super::Jump();
 	}
 }
+
 void ALostV2Character::EKeyPressed()
 { 
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
@@ -236,13 +238,18 @@ void ALostV2Character::Die()
 
 	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
 
-	UAnimInstance *AnimInstance = GetMesh()->GetAnimInstance();
-
 	Tags.Add(FName("Dead"));
 
-	if (AnimInstance && DeathMontage) {
-		AnimInstance->Montage_Play(DeathMontage);
-		AnimInstance->Montage_JumpToSection(TEXT("Death1"), DeathMontage);
+	PlayMontage(DeathMontage, TEXT("Death1"));
+}
+
+void ALostV2Character::PlayMontage(UAnimMontage *Montage, FName SectionName)
+{
+	UAnimInstance *AnimInstance = GetMesh()->GetAnimInstance();
+	
+	if (AnimInstance && Montage) {
+		AnimInstance->Montage_Play(Montage);
+		AnimInstance->Montage_JumpToSection(SectionName, Montage);
 	}
 }
 

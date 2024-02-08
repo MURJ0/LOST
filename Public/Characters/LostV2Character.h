@@ -70,7 +70,7 @@ protected:
 
 	virtual void BeginPlay() override;
 	virtual void Jump() override;
-	
+
 	void Die();
 
 	UPROPERTY(BlueprintReadOnly, Category = "DeathPose")
@@ -104,6 +104,7 @@ protected:
 	/*
 	Animation montages
 	*/
+	void PlayMontage(UAnimMontage* Montage);
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* OneHandedAttackMontage;
