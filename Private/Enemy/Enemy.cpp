@@ -209,7 +209,9 @@ void AEnemy::Attack()
 	//	return; // Skip attack() if the enemy got hit 
 	//}
 
-	if (CombatTarget->ActorHasTag(TEXT("Enemy"))) {
+	// if Echo is dead enemy will stop attacking 
+	if (CombatTarget->ActorHasTag(TEXT("Dead"))) {
+		CombatTarget = nullptr;
 		return;
 	}
 
@@ -400,6 +402,10 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 	// if the enemy is alive, its not already chasing or attacking and the pawn he is detecting the playable character
 	if (bShouldChaseTarget) {
 		CombatTarget = SeenPawn;
+		if (CombatTarget->ActorHasTag(TEXT("Dead"))) {
+			CombatTarget = nullptr;
+			return;
+		}
 		ClearPatrolTimer(); // If it reaches the target, clear the timer that's causing the enemy to stay in one position.
 		StartChasing();
 	}

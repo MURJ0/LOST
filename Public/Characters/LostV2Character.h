@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -19,6 +17,7 @@ class UGroomComponent;
 class AItem;
 class UAnimMontage;
 class AWeapon;
+class ULostOverlay;
 
 UCLASS()
 class LOSTV2_API ALostV2Character : public ABaseCharacter
@@ -39,11 +38,11 @@ class LOSTV2_API ALostV2Character : public ABaseCharacter
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 
-
+	UPROPERTY()
+	ULostOverlay* LostOverlay;
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	AWeapon* EquippedWeapon;
-
 
 public:
 	ALostV2Character();
@@ -69,8 +68,6 @@ protected:
 	bool bCanMove = true;
 
 	virtual void BeginPlay() override;
-	virtual void Jump() override;
-
 	void Die();
 
 	UPROPERTY(BlueprintReadOnly, Category = "DeathPose")
@@ -97,14 +94,15 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void Move(const FInputActionValue& Value);
 	void EKeyPressed();
+	bool IsCharacterStateUnoccupied();
+	bool IsActionStateUnoccupied();
 	void Attack();
-
-	void PlayEquipMontage(FName SectionName);
+	virtual void Jump() override;
 
 	/*
 	Animation montages
 	*/
-	void PlayMontage(UAnimMontage* Montage);
+	void PlayMontage(UAnimMontage* Montage, FName SectionName);
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* OneHandedAttackMontage;
@@ -141,4 +139,8 @@ protected:
 	virtual void DireactionalHitReact(const FVector& ImpactPoint) override;
 	virtual void PlayGetHitMontage(const FName& SectionName) override;
 	// </BaseCharacter*>
+
+private:
+	void InitializeLostOverlay(APlayerController* PlayerController);
+	void SetHealthHUD();
 };

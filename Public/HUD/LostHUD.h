@@ -22,4 +22,10 @@ protected:
 private:
 	UPROPERTY(EditDefaultsOnly, Category = Lost)
 	TSubclassOf<ULostOverlay> LostOverlayClass;
+
+	UPROPERTY()
+	ULostOverlay* LostOverlay;
+
+public:
+	FORCEINLINE ULostOverlay* GetLostOverlay() const { return LostOverlay; }
 };

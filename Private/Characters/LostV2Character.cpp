@@ -17,9 +17,9 @@
 #include "Item/Weapons/Weapon.h"
 #include "Item/Item.h"
 #include "Animation/AnimMontage.h"
-#include <Enemy/Enemy.h>
-
-// Test update from laptop v2
+#include "Enemy/Enemy.h"
+#include "HUD/LostHUD.h"
+#include "HUD/LostOverlay.h"
 
 ALostV2Character::ALostV2Character()
 {
@@ -61,35 +61,42 @@ void ALostV2Character::BeginPlay()
 		if (Subsystem) {
 			Subsystem->AddMappingContext(LostMappingContext, 0);
 		}
+		InitializeLostOverlay(PlayerController);
 	}
 	
 	//making tag for the LostCharacter so I can use it in the PawnSeen method in enemy.cpp
 	Tags.Add(FName("EngageableTarget"));
 }
 
-void ALostV2Character::Move(const FInputActionValue& Value)
+void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController)
 {
-	if (ActionState == EActionState::EAS_Unoccupied && bCanMove) {
-		const FVector2D MovementVector = Value.Get< FVector2D>();
-			//UE_LOG(LogTemp, Warning, TEXT("Adding movement input."));
-			if (Controller) {
-
-				const FRotator Rotation = Controller->GetControlRotation();
-				const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-				const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-				AddMovementInput(ForwardDirection, MovementVector.Y);
-
-				const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-				AddMovementInput(RightDirection, MovementVector.X);
-			}
+	ALostHUD* LostHUD = Cast<ALostHUD>(PlayerController->GetHUD());
+	if (LostHUD) {
+		LostOverlay = LostHUD->GetLostOverlay();
+		if (LostOverlay) {
+			LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+			LostOverlay->SetStaminaBarPercent(1.f);
+			LostOverlay->SetGold(0);
+			LostOverlay->SetGold(0);
+		}
 	}
 }
 
-void ALostV2Character::Jump()
+void ALostV2Character::Move(const FInputActionValue& Value)
 {
-	if (ActionState == EActionState::EAS_Unoccupied){
-		Super::Jump();
+	if (!IsActionStateUnoccupied() && !bCanMove) return;
+
+	const FVector2D MovementVector = Value.Get< FVector2D>();
+	if (Controller) {
+
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(ForwardDirection, MovementVector.Y);
+
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(RightDirection, MovementVector.X);
 	}
 }
 
@@ -104,11 +111,11 @@ void ALostV2Character::EKeyPressed()
 		EquippedWeapon = OverlappingWeapon;
 	}
 	else if (EquippedWeapon){
-		if (ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped) {
+		if (IsActionStateUnoccupied() && !IsCharacterStateUnoccupied()) {
 			PlayMontage(EquipUnequipMontage, FName("Unequip"));
 			CharacterState = ECharacterState::ECS_Unequipped;
 		}
-		else if (ActionState == EActionState::EAS_Unoccupied && CharacterState == ECharacterState::ECS_Unequipped && EquippedWeapon != nullptr) {
+		else if (IsActionStateUnoccupied() && IsCharacterStateUnoccupied() && EquippedWeapon != nullptr) {
 			PlayMontage(EquipUnequipMontage, FName("Equip"));
 			CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
 		}
@@ -116,13 +123,14 @@ void ALostV2Character::EKeyPressed()
 	}
 }
 
-void ALostV2Character::PlayEquipMontage(FName SectionName)
+bool ALostV2Character::IsCharacterStateUnoccupied()
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && EquipUnequipMontage) {
-		AnimInstance->Montage_Play(EquipUnequipMontage);
-		AnimInstance->Montage_JumpToSection(SectionName, EquipUnequipMontage);
-	}
+	return CharacterState == ECharacterState::ECS_Unequipped;
+}
+
+bool ALostV2Character::IsActionStateUnoccupied()
+{
+	return ActionState == EActionState::EAS_Unoccupied;
 }
 
 float LastSuccessfulAttackTime = 0.8f;
@@ -130,7 +138,7 @@ float ComboResetTime = 2.0f; // Set the time before combo resets (in seconds)
 
 void ALostV2Character::Attack()
 {
-	if (ActionState == EActionState::EAS_Unoccupied) {
+	if (IsActionStateUnoccupied()) {
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance && OneHandedAttackMontage) {
 			if (GetCharacterState() == ECharacterState::ECS_EquipedOneHandedWeapon) {
@@ -157,6 +165,13 @@ void ALostV2Character::Attack()
 				ActionState = EActionState::EAS_Attacking;
 			}
 		}
+	}
+}
+
+void ALostV2Character::Jump()
+{
+	if (IsActionStateUnoccupied()) {
+		Super::Jump();
 	}
 }
 
@@ -206,7 +221,15 @@ void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 float ALostV2Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	HandleDamage(DamageAmount);
+	SetHealthHUD();
 	return DamageAmount;
+}
+
+void ALostV2Character::SetHealthHUD()
+{
+	if (LostOverlay && Attributes) {
+		LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	}
 }
 
 void ALostV2Character::GetHit_Implementation(const FVector& ImpactPoint)

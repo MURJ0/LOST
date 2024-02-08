@@ -9,7 +9,7 @@ void ALostHUD::BeginPlay()
 	if (World) {
 		APlayerController* Controller = World->GetFirstPlayerController();
 		if (Controller && LostOverlayClass) {
-			ULostOverlay* LostOverlay = CreateWidget<ULostOverlay>(Controller, LostOverlayClass);
+			LostOverlay = CreateWidget<ULostOverlay>(Controller, LostOverlayClass);
 			LostOverlay->AddToViewport();
 		}
 	}
