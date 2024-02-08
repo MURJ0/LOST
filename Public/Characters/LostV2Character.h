@@ -69,7 +69,8 @@ protected:
 	bool bCanMove = true;
 
 	virtual void BeginPlay() override;
-
+	virtual void Jump() override;
+	
 	void Die();
 
 	UPROPERTY(BlueprintReadOnly, Category = "DeathPose")

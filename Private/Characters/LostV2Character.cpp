@@ -86,6 +86,11 @@ void ALostV2Character::Move(const FInputActionValue& Value)
 	}
 }
 
+void ALostV2Character::Jump(){
+	if (ActionState == EActionState::EAS_Unoccupied){
+		Super::Jump();
+	}
+}
 void ALostV2Character::EKeyPressed()
 { 
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
