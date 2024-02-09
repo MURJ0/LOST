@@ -19,9 +19,9 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	// </AActor>
 
-	// <UHitInterface> 
+	// <ABaseCharacter> 
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
-	// </UHitInterface> 
+	// </ABaseCharacter> 
 
 protected:
 	virtual void BeginPlay() override;
@@ -86,9 +86,11 @@ private:
 
 	// Equip and Arm/Disarm methods
 	void EquipWeaponsAtBeginPlay();
-
 	void PlayArmDisarmMontage(FName SectionName);
+
+	// Play montages
 	void PlayMontage(UAnimInstance*& AnimInstance, UAnimMontage*& TwoHandedWeaponMontage, FName SectionName);
+	void PlayDeathMontage();
 
 	// Arm/Disarm Montange
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
@@ -149,6 +151,7 @@ private:
 	bool IsOutsideAttackRadius();
 	bool IsInsideAttackRadius();
 	bool CanAttack();
+    bool ShouldChaseTarget();
 
 	// Combat
 	bool bIsGettingHit;

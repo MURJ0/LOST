@@ -53,9 +53,9 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	//  </BaseCharacter>
 
-	// <UHitInterface> 
+	// <ABaseCharacter> 
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
-	// </UHitInterface> 
+	// </ABaseCharacter> 
 
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 

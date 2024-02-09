@@ -55,7 +55,7 @@ void AEnemy::BeginPlay()
 	}
 
 	// equiping the weapons in the right and left hand to their correct sockets
-	AEnemy::EquipWeaponsAtBeginPlay();
+	EquipWeaponsAtBeginPlay();
 
 }
 
@@ -63,9 +63,12 @@ void AEnemy::EquipWeaponsAtBeginPlay()
 {
 	// equipping every type of weapon to his correct socket
 	UWorld* World = GetWorld();
-
+    if (!World) {
+		return;
+	}
+	
 	// for the right hand --> in the right hand can be only two types of weapons --> Twohanded weapon( if the weapon is twohanded the enemy cant have anything else in the left hand ) and onehanded weapon
-	if (World && RightHandWeaponClass) {
+	if (RightHandWeaponClass) {
 		RightHandEquippedWeapon = World->SpawnActor<AWeapon>(RightHandWeaponClass);
 
 		if (IsRightHandWeaponTwoHanded()) { 
@@ -80,7 +83,7 @@ void AEnemy::EquipWeaponsAtBeginPlay()
 	}
 
 	// for the left hand --> in the left hand must be only to types of weapons - shield and onehanded weapon!!
-	if (World && LeftHandWeaponClass) {
+	if (LeftHandWeaponClass) {
 		LeftHandEquippedWeapon = World->SpawnActor<AWeapon>(LeftHandWeaponClass);
 
 		if (IsLeftHandWeaponOneHanded()) {
@@ -216,28 +219,33 @@ void AEnemy::Attack()
 	}
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (IsRightHandWeaponOneHanded() && !LeftHandEquippedWeapon) {
-		PlayMontage(AnimInstance, AttackMontage, TEXT("OneHandCombo"));
-		ClearAttackTimer();
-		return;
-	}
+	// if the enemy has equiped only weapon on the left hand will execute only montages for "onehanded weapon combo" or "twohanded weapon combo" 
+	if (RightHandEquippedWeapon && LeftHandEquippedWeapon == nullptr){
+	    if (IsRightHandWeaponOneHanded()) {
+		    PlayMontage(AnimInstance, AttackMontage, TEXT("OneHandCombo"));
+		    ClearAttackTimer();
+	        return;
+	    }
 
-	if (IsRightHandWeaponTwoHanded() && !LeftHandEquippedWeapon) {
-		PlayMontage(AnimInstance, AttackMontage, TEXT("TwoHand2"));
-		ClearAttackTimer();
-		return;
+	    if (IsRightHandWeaponTwoHanded()) {
+		    PlayMontage(AnimInstance, AttackMontage, TEXT("TwoHand2"));
+		    ClearAttackTimer();
+		    return;
+	    }
 	}
-
-	if (IsRightHandWeaponOneHanded() && IsLeftHandWeaponShield()) {
-		PlayMontage(AnimInstance, AttackMontage, TEXT("SwordAndShield"));
-		ClearAttackTimer();
-		return;
-	}
+    // if the enemy has equipped wepons on both hands will execute only montages for "sword and shield combo" or "dual weapon combe" 
+    if(RightHandEquippedWeapon && LeftHandEquippedWeapon){
+	    if (IsRightHandWeaponOneHanded() && IsLeftHandWeaponShield()) {
+		    PlayMontage(AnimInstance, AttackMontage, TEXT("SwordAndShield"));
+		    ClearAttackTimer();
+		    return;
+	    }
 	
-	if (IsRightHandWeaponOneHanded() && IsLeftHandWeaponOneHanded()) {
-		PlayMontage(AnimInstance, AttackMontage, TEXT("DualWeapon"));
-		ClearAttackTimer();
-		return;
+	    if (IsRightHandWeaponOneHanded() && IsLeftHandWeaponOneHanded()) {
+		    PlayMontage(AnimInstance, AttackMontage, TEXT("DualWeapon"));
+		    ClearAttackTimer();
+		    return;
+	    }
 	}
 }
 
@@ -261,6 +269,8 @@ void AEnemy::StartAttackTimer()
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 {
+	Super::GetHit_Implementation(ImpactPoint); //plays HitSound and HitParticle
+
 	ShowHealthBar();
 
 	//bIsAttacking = false;
@@ -271,13 +281,7 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
 	DisableWeaponBoxCollision(RightHandEquippedWeapon);
 	DisableWeaponBoxCollision(LeftHandEquippedWeapon);
 
-	StopAttackMontage();
-
-	// when the enemy gets hit will play the meta sound 
-	PlayHitSound(ImpactPoint);
-
-	// showing particles in the place where the enemy got hit
-	PlayHitParticle(ImpactPoint);
+	StopMontage(AttackMontage);
 
 	if (!bArmed) {
 		PlayArmDisarmMontage(TEXT("Arm"));
@@ -308,12 +312,9 @@ void AEnemy::PlayGetHitMontage(const FName& SectionName)
 	Super::PlayGetHitMontage(SectionName);
 }
 
-void AEnemy::Die()
+void PlayDeathMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-
-	HideHealthBar();
-
 	if (AnimInstance && DeathMontage) {
 		AnimInstance->Montage_Play(DeathMontage);
 		const int32 Selection = FMath::RandRange(0, 1);
@@ -329,7 +330,14 @@ void AEnemy::Die()
 		}
 		AnimInstance->Montage_JumpToSection(SectionName, DeathMontage);
 	}
-	
+}
+
+void AEnemy::Die()
+{
+	HideHealthBar(); // Hides the healthbar
+
+	PlayDeathMontage(); // Play random death montage
+
 	DestroyWeapons(); // Destroy every equiped weapon when the enemy dies 
 	
 	DisableCapsule(); // Setting the collision of the capsule to IGNORE PAWN after the enemy dies so the character can go through  
@@ -393,14 +401,8 @@ AActor* AEnemy::ChoosePatrolTarget()
 
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
-	const bool bShouldChaseTarget =
-		DeathPose == EDeathPose::EDP_Alive &&
-		EnemyState != EEnemyState::EES_Chasing &&
-		EnemyState != EEnemyState::EES_Attacking &&
-		SeenPawn->ActorHasTag(FName("EngageableTarget"));
-	
 	// if the enemy is alive, its not already chasing or attacking and the pawn he is detecting the playable character
-	if (bShouldChaseTarget) {
+	if (ShouldChaseTarget()) {
 		CombatTarget = SeenPawn;
 		if (CombatTarget->ActorHasTag(TEXT("Dead"))) {
 			CombatTarget = nullptr;
@@ -409,6 +411,13 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 		ClearPatrolTimer(); // If it reaches the target, clear the timer that's causing the enemy to stay in one position.
 		StartChasing();
 	}
+}
+bool ShouldChaseTarget()
+{
+	return DeathPose == EDeathPose::EDP_Alive &&
+		EnemyState != EEnemyState::EES_Chasing &&
+		EnemyState != EEnemyState::EES_Attacking &&
+		SeenPawn->ActorHasTag(FName("EngageableTarget"));
 }
 
 void AEnemy::PatrolTimeFinished()
@@ -466,16 +475,16 @@ void AEnemy::PlayArmDisarmMontage(FName SectionName)
 	}
 }
 
-bool AEnemy::IsRightHandWeaponTwoHanded()
-{
-	return RightHandEquippedWeapon->GetWeaponType() == EWeaponType::TwoHanded;
-}
-
 void AEnemy::DisableWeaponBoxCollision(AWeapon* EquippedWeapon)
 {	
 	if (EquippedWeapon) {
 		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+}
+
+bool AEnemy::IsRightHandWeaponTwoHanded()
+{
+	return RightHandEquippedWeapon->GetWeaponType() == EWeaponType::TwoHanded;
 }
 
 bool AEnemy::IsRightHandWeaponOneHanded()
@@ -567,19 +576,3 @@ void AEnemy::SetWeaponCollision(ECollisionEnabled::Type CollisionEnabled)
 		LeftHandEquippedWeapon->IgnoreActors.Empty();
 	}
 }
-
-//if (RightHandEquippedWeapon && RightHandEquippedWeapon->GetWeaponBox()) {
-//	UPrimitiveComponent* WeaponBox = RightHandEquippedWeapon->GetWeaponBox();
-//	if (WeaponBox) {
-//		WeaponBox->SetCollisionEnabled(CollisionEnabled);
-//	}
-//	RightHandEquippedWeapon->IgnoreActors.Empty();
-//}
-//
-//if (LeftHandEquippedWeapon && LeftHandEquippedWeapon->GetWeaponBox()) {
-//	UPrimitiveComponent* WeaponBox = LeftHandEquippedWeapon->GetWeaponBox();
-//	if (WeaponBox) {
-//		WeaponBox->SetCollisionEnabled(CollisionEnabled);
-//	}
-//	LeftHandEquippedWeapon->IgnoreActors.Empty();
-//}

@@ -32,6 +32,15 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+{
+	// when the enemy gets hit will play the meta sound 
+	PlayHitSound(ImpactPoint);
+	
+	// showing particles in the place where the enemy got hit
+	PlayHitParticle(ImpactPoint);
+}
+
 void ABaseCharacter::PlayHitSound(const FVector& ImpactPoint)
 {
 	if (HitSound) {
@@ -91,11 +100,11 @@ FVector ABaseCharacter::GetRotationWarpTarget()
 	return FVector();
 }
 
-void ABaseCharacter::StopAttackMontage()
+void ABaseCharacter::StopMontage(UAnimMontage* &Montage)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AttackMontage) {
-		AnimInstance->Montage_Stop(0.25f, AttackMontage);
+	if (AnimInstance && Montage) {
+		AnimInstance->Montage_Stop(0.25f, Montage);
 	}
 }
 

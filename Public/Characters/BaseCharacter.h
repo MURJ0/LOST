@@ -19,7 +19,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+ 	
+	// <UHitInterface> 
+	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	// </UHitInterface> 
 protected:
 	virtual void BeginPlay() override;
 
@@ -49,7 +52,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	FVector GetRotationWarpTarget();
 
-	void StopAttackMontage();
+	void StopMontage(UAnimMontage* &Montage);
 
 	// Components
 

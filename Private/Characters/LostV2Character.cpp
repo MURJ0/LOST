@@ -237,13 +237,8 @@ void ALostV2Character::SetHealthHUD()
 
 void ALostV2Character::GetHit_Implementation(const FVector& ImpactPoint)
 {
-	// when the enemy gets hit will play the meta sound 
-	PlayHitSound(ImpactPoint);
+	Super::GetHit_Implementation(ImpactPoint);
 	
-	// showing particles in the place where the enemy got hit
-	PlayHitParticle(ImpactPoint);
-
-
 	if (IsAlive()) { // Check if Hitter is valid and not the player character itself
 		DireactionalHitReact(ImpactPoint);
 		ActionState = EActionState::EAS_HitReaction;
