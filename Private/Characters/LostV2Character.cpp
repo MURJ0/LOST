@@ -85,19 +85,22 @@ void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController
 void ALostV2Character::Move(const FInputActionValue& Value)
 {
 	if (!IsActionStateUnoccupied() && !bCanMove) return;
+	if (ActionState == EActionState::EAS_Dead) return;
+	else {
+		const FVector2D MovementVector = Value.Get< FVector2D>();
+		if (Controller) {
 
-	const FVector2D MovementVector = Value.Get< FVector2D>();
-	if (Controller) {
+			const FRotator Rotation = Controller->GetControlRotation();
+			const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+			const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+			AddMovementInput(ForwardDirection, MovementVector.Y);
 
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+			AddMovementInput(RightDirection, MovementVector.X);
+		}
 	}
+	
 }
 
 void ALostV2Character::EKeyPressed()
@@ -264,6 +267,7 @@ void ALostV2Character::Die()
 	Tags.Add(FName("Dead"));
 
 	PlayMontage(DeathMontage, FName("Death1"));
+	
 }
 
 void ALostV2Character::PlayMontage(UAnimMontage *Montage, FName SectionName)
