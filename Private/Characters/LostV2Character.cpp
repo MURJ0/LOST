@@ -217,7 +217,7 @@ void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		//Attack
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ALostV2Character::Attack);
-
+	
 	}
 }
 

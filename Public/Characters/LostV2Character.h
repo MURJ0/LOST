@@ -67,6 +67,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	EActionState GetActionStateInControlRig() const { return ActionState; }
+
 protected:
 	int32 AttackCounter = 0;
 

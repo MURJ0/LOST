@@ -95,6 +95,7 @@ void AEnemy::EquipWeaponsAtBeginPlay()
 		}
 		LeftHandEquippedWeapon->DeactivateEmbersEffect();
 	}
+	
 }
 
 void AEnemy::Tick(float DeltaTime)
@@ -312,7 +313,7 @@ void AEnemy::PlayGetHitMontage(const FName& SectionName)
 	Super::PlayGetHitMontage(SectionName);
 }
 
-void PlayDeathMontage()
+void AEnemy::PlayDeathMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && DeathMontage) {
@@ -402,7 +403,7 @@ AActor* AEnemy::ChoosePatrolTarget()
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
 	// if the enemy is alive, its not already chasing or attacking and the pawn he is detecting the playable character
-	if (ShouldChaseTarget()) {
+	if (ShouldChaseTarget() && SeenPawn->ActorHasTag(FName("EngageableTarget"))) {
 		CombatTarget = SeenPawn;
 		if (CombatTarget->ActorHasTag(TEXT("Dead"))) {
 			CombatTarget = nullptr;
@@ -412,12 +413,12 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 		StartChasing();
 	}
 }
-bool ShouldChaseTarget()
+
+bool AEnemy::ShouldChaseTarget()
 {
 	return DeathPose == EDeathPose::EDP_Alive &&
 		EnemyState != EEnemyState::EES_Chasing &&
-		EnemyState != EEnemyState::EES_Attacking &&
-		SeenPawn->ActorHasTag(FName("EngageableTarget"));
+		EnemyState != EEnemyState::EES_Attacking;
 }
 
 void AEnemy::PatrolTimeFinished()
