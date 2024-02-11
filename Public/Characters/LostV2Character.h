@@ -108,13 +108,21 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* AttackAction;
 
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* DodgeAction;
+
 	void Look(const FInputActionValue& Value);
 	void Move(const FInputActionValue& Value);
-	void EKeyPressed();
-	bool IsCharacterStateUnoccupied();
-	bool IsActionStateUnoccupied();
 	void Attack();
 	virtual void Jump() override;
+	void EKeyPressed();
+	void SetDodgeCostForDifferentTypeOfWeapon();
+	void Dodge();
+
+	bool HasEnoughStamina();
+
+	bool IsCharacterStateUnoccupied();
+	bool IsActionStateUnoccupied();
 
 	/*
 	Animation montages
@@ -129,6 +137,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* EquipUnequipMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* DodgeMontage;
 
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();

@@ -65,7 +65,7 @@ void ALostV2Character::BeginPlay()
 		}
 		InitializeLostOverlay(PlayerController);
 	}
-	
+
 	//making tag for the LostCharacter so I can use it in the PawnSeen method in enemy.cpp
 	Tags.Add(FName("EngageableTarget"));
 }
@@ -87,7 +87,6 @@ void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController
 void ALostV2Character::Move(const FInputActionValue& Value)
 {
 	if (!IsActionStateUnoccupied() && !bCanMove) {
-		UE_LOG(LogTemp, Warning, TEXT("ne moje da se dviji"));
 		return;
 	}
 
@@ -118,6 +117,7 @@ void ALostV2Character::EKeyPressed()
 		CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
 		OverlappingItem = nullptr;
 		EquippedWeapon = OverlappingWeapon;
+		SetDodgeCostForDifferentTypeOfWeapon();
 	}
 	else if (EquippedWeapon){
 		if (IsActionStateUnoccupied() && !IsCharacterStateUnoccupied()) {
@@ -129,6 +129,19 @@ void ALostV2Character::EKeyPressed()
 			CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
 		}
 		ActionState = EActionState::EAS_Unoccupied;
+	}
+}
+
+void ALostV2Character::SetDodgeCostForDifferentTypeOfWeapon()
+{
+	if (EquippedWeapon) {
+		if (EquippedWeapon->GetWeaponType() == EWeaponType::OneHanded) {
+			Attributes->SetDodgeCost(25.f);
+		}
+
+		if (EquippedWeapon->GetWeaponType() == EWeaponType::TwoHanded) {
+			Attributes->SetDodgeCost(35.f);
+		}
 	}
 }
 
@@ -197,6 +210,11 @@ void ALostV2Character::Look(const FInputActionValue& Value)
 void ALostV2Character::Tick(float DeltaTime)
 { 
 	Super::Tick(DeltaTime);
+
+	if (Attributes && LostOverlay) {
+		Attributes->RegenStamina(DeltaTime);
+		LostOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
 }
 
 void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -220,8 +238,30 @@ void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		//Attack
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ALostV2Character::Attack);
-	
+
+		//Dodge
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ALostV2Character::Dodge);
 	}
+}
+
+void ALostV2Character::Dodge()
+{
+	if (!IsActionStateUnoccupied() || !HasEnoughStamina()) { return; }
+
+	if (ActionState == EActionState::EAS_Dodging) {	return;	}
+
+	ActionState = EActionState::EAS_Dodging;
+	PlayMontage(DodgeMontage, FName("Dodge")); // Plays DodgeMontage
+
+	if (Attributes && LostOverlay) {
+		Attributes->UseStamina(Attributes->GetDodgeCost());
+		LostOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
+}
+
+bool ALostV2Character::HasEnoughStamina()
+{
+	return Attributes && Attributes->GetStamina() > Attributes->GetDodgeCost();;
 }
 
 float ALostV2Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
