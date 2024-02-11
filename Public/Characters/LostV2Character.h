@@ -5,6 +5,7 @@
 #include "InputActionValue.h"
 #include "CharacterTypes.h"
 #include "Characters/BaseCharacter.h"
+#include "Interfaces/PickUpInterface.h"
 #include "LostV2Character.generated.h"
 
 class USkeletalMeshComponent;
@@ -18,9 +19,10 @@ class AItem;
 class UAnimMontage;
 class AWeapon;
 class ULostOverlay;
+class ATreasure;
 
 UCLASS()
-class LOSTV2_API ALostV2Character : public ABaseCharacter
+class LOSTV2_API ALostV2Character : public ABaseCharacter, public IPickUpInterface
 {
 	GENERATED_BODY()
 
@@ -57,7 +59,11 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 	// </ABaseCharacter> 
 
-	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
+	virtual void SetOverlappingItem(class AItem* Item) override;
+	virtual void AddSouls(class ASoul* Soul) override;
+	virtual void AddGold(class ATreasure* Gold) override;
+
+	//FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	
@@ -73,6 +79,11 @@ protected:
 
 	bool bCanMove = true;
 
+	// Attack method
+	float LastSuccessfulAttackTime = 0.8f;
+	float ComboResetTime = 2.0f; // Set the time before combo resets (in seconds)
+	// Attack method
+	
 	virtual void BeginPlay() override;
 	void Die();
 

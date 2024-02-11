@@ -3,8 +3,10 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
-#include "Characters/LostV2Character.h"
+#include "Interfaces/PickUpInterface.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AItem::AItem()
@@ -20,8 +22,8 @@ AItem::AItem()
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
 	Sphere->SetupAttachment(GetRootComponent());
 
-	EmbersEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Embers"));
-	EmbersEffect->SetupAttachment(GetRootComponent());
+	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Embers"));
+	ItemEffect->SetupAttachment(GetRootComponent());
 
 
 }
@@ -33,6 +35,28 @@ void AItem::BeginPlay()
 	
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSpherOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
+}
+
+void AItem::SpawnPickUpSystem()
+{
+	if (PickUpEffect) {
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			this,
+			PickUpEffect,
+			GetActorLocation()
+		);
+	}
+}
+
+void AItem::SpawnPickUpSound()
+{
+	if (PickUpSound) {
+		UGameplayStatics::SpawnSoundAtLocation(
+			this,
+			PickUpSound,
+			GetActorLocation()
+		);
+	}
 }
 
 
@@ -50,24 +74,24 @@ void AItem::Tick(float DeltaTime)
 
 void AItem::OnSpherOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ALostV2Character* LostCharacter = Cast<ALostV2Character>(OtherActor);
-	if (LostCharacter) {
-		LostCharacter->SetOverlappingItem(this);
+	IPickUpInterface* PickUpInterface = Cast<IPickUpInterface>(OtherActor);
+	if (PickUpInterface) {
+		PickUpInterface->SetOverlappingItem(this);
 	}
 }
 
 void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	ALostV2Character* LostCharacter = Cast<ALostV2Character>(OtherActor);
-	if (LostCharacter) {
-		LostCharacter->SetOverlappingItem(nullptr);
+	IPickUpInterface* PickUpInterface = Cast<IPickUpInterface>(OtherActor);
+	if (PickUpInterface) {
+		PickUpInterface->SetOverlappingItem(nullptr);
 	}
 }
 
 void AItem::DeactivateEmbersEffect()
 {
-	if (EmbersEffect) {
-		EmbersEffect->Deactivate();
+	if (ItemEffect) {
+		ItemEffect->Deactivate();
 	}
 }
 

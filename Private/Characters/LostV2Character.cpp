@@ -16,6 +16,8 @@
 
 #include "Item/Weapons/Weapon.h"
 #include "Item/Item.h"
+#include "Item/Soul.h"
+#include "Item/Treasure/Treasure.h"
 #include "Animation/AnimMontage.h"
 #include "Enemy/Enemy.h"
 #include "HUD/LostHUD.h"
@@ -84,7 +86,11 @@ void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController
 
 void ALostV2Character::Move(const FInputActionValue& Value)
 {
-	if (!IsActionStateUnoccupied() && !bCanMove) return;
+	if (!IsActionStateUnoccupied() && !bCanMove) {
+		UE_LOG(LogTemp, Warning, TEXT("ne moje da se dviji"));
+		return;
+	}
+
 	if (ActionState == EActionState::EAS_Dead) return;
 	else {
 		const FVector2D MovementVector = Value.Get< FVector2D>();
@@ -135,9 +141,6 @@ bool ALostV2Character::IsActionStateUnoccupied()
 {
 	return ActionState == EActionState::EAS_Unoccupied;
 }
-
-float LastSuccessfulAttackTime = 0.8f;
-float ComboResetTime = 2.0f; // Set the time before combo resets (in seconds)
 
 void ALostV2Character::Attack()
 {
@@ -252,6 +255,27 @@ void ALostV2Character::GetHit_Implementation(const FVector& ImpactPoint)
 	}
 }
 
+void ALostV2Character::SetOverlappingItem(AItem* Item)
+{
+	OverlappingItem = Item;
+}
+
+void ALostV2Character::AddSouls(ASoul* Soul)
+{
+	if (Attributes && LostOverlay) {
+		Attributes->AddSouls(Soul->GetSouls());
+		LostOverlay->SetSouls(Attributes->GetSouls());
+	}
+}
+
+void ALostV2Character::AddGold(ATreasure* Gold)
+{
+	if (Attributes && LostOverlay) {
+		Attributes->AddGold(Gold->GetGold());
+		LostOverlay->SetGold(Attributes->GetGold());
+	}
+}
+
 void ALostV2Character::Die()
 {
 	ActionState = EActionState::EAS_Dead;
@@ -301,11 +325,13 @@ void ALostV2Character::Arm()
 
 void ALostV2Character::CanMove()
 {
+	ActionState = EActionState::EAS_Unoccupied;
 	bCanMove = true;
 }
 
 void ALostV2Character::CannotMove()
 {
+	ActionState = EActionState::EAS_Attacking;
 	bCanMove = false;
 }
 

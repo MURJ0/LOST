@@ -33,6 +33,16 @@ float UAttributeComponent::GetHealthPercent()
 	return Health / MaxHealth;
 }
 
+void UAttributeComponent::AddGold(int32 AmountOfGold)
+{
+	Gold += AmountOfGold;
+}
+
+void UAttributeComponent::AddSouls(int32 AmountOfSouls)
+{
+	Souls += AmountOfSouls;
+}
+
 bool UAttributeComponent::IsAlive()
 {
 	return Health > 0.f;

@@ -1,7 +1,8 @@
 #include "Enemy/Enemy.h"
 #include "Item/Weapons/Weapon.h"
-#include <Characters/LostV2Character.h>
+#include "Characters/LostV2Character.h"
 #include "AIController.h"
+#include "Item/Soul.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -207,6 +208,18 @@ void AEnemy::StartChasing()
 	MoveToTarget(CombatTarget);
 }
 
+void AEnemy::SpawnSouls()
+{
+	UWorld* World = GetWorld();
+	if (World && SoulClass) {
+		const FVector SpawnLocation = GetActorLocation() + FVector(0.f, 0.f, 50.f);
+		ASoul *SpawnedSoul = World->SpawnActor <ASoul>(SoulClass, SpawnLocation, GetActorRotation());
+		if (SpawnedSoul) {
+			SpawnedSoul->SetSouls(Attributes->GetSouls());
+		}
+	}
+}
+
 void AEnemy::Attack()
 {
 	//if (!bIsAttacking) {
@@ -338,6 +351,8 @@ void AEnemy::Die()
 	HideHealthBar(); // Hides the healthbar
 
 	PlayDeathMontage(); // Play random death montage
+
+	SpawnSouls(); // Spawning souls when the enemy dies
 
 	DestroyWeapons(); // Destroy every equiped weapon when the enemy dies 
 	

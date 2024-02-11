@@ -144,6 +144,8 @@ private:
 	void StartPatrolling();
 	void StartChasing();
 
+	void SpawnSouls();
+
 	void ShowHealthBar();
 	void HideHealthBar();
 
@@ -191,4 +193,7 @@ private:
 	void PatrolTimeFinished();
 
 	bool bIsAttacking;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	TSubclassOf<class ASoul> SoulClass;
 };

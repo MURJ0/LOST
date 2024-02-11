@@ -8,6 +8,9 @@
 
 class UStaticMeshComponent;
 class UNiagaraComponent;
+class USphereComponent;
+class UNiagaraSystem;
+class SoundBase;
 
 enum class EItemState : uint8 {
 	EIS_Hovering,
@@ -19,7 +22,6 @@ UCLASS()
 class LOSTV2_API AItem : public AActor
 {
 	GENERATED_BODY()
-
 
 public:	
 	// Sets default values for this actor's properties
@@ -37,14 +39,24 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void SpawnPickUpSystem();
+	virtual void SpawnPickUpSound();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(VisibleAnywhere)
-	class USphereComponent* Sphere;
+	USphereComponent* Sphere;
 
 	EItemState ItemState = EItemState::EIS_Hovering;
 
 	UPROPERTY(EditAnywhere, Category = NiagaraComponent)
-	UNiagaraComponent* EmbersEffect;
+	UNiagaraComponent* ItemEffect;
+
+	UPROPERTY(EditAnywhere)
+	USoundBase* PickUpSound;
+private:
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* PickUpEffect;
+
 };

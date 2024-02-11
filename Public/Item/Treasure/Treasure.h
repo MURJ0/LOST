@@ -19,6 +19,9 @@ class LOSTV2_API ATreasure : public AItem
 
 	UPROPERTY(EditAnywhere, Category = "Treasure Properties")
 	int32 Gold;
-public:
+	
+protected:
 	void OnSpherOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
+public:
+	FORCEINLINE int32 GetGold() const { return Gold; }
 };
