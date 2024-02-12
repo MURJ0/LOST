@@ -15,6 +15,7 @@ enum class EActionState : uint8
 	EAS_HitReaction UMETA(DisplayName = "EAS_HitReaction"),
 	EAS_Attacking UMETA(DisplayName = "Attacking"),
 	EAS_Dodging UMETA(DisplayName = "Dodging"),
+	EAS_Resting UMETA(DisplayName = "Resting"),
 	EAS_Dead UMETA(DisplayName = "Dead"),
 };
 
@@ -22,6 +23,12 @@ UENUM(BlueprintType)
 enum class ELostDeathPose : uint8
 {
 	ELDP_Death1 UMETA(DisplayName = "Death1"),
+};
+
+UENUM(BlueprintType)
+enum class ELostRestingPose : uint8
+{
+	ELRP_Resting1 UMETA(DisplayName = "Resting1"),
 };
 
 

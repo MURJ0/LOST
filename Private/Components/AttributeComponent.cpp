@@ -58,6 +58,11 @@ void UAttributeComponent::RegenStamina(float DeltaTime)
 	Stamina = FMath::Clamp(Stamina + StaminaRegenRate * DeltaTime, 0.f, MaxStamina);
 }
 
+void UAttributeComponent::RegenHealth(float DeltaTime)
+{
+	Health = FMath::Clamp(Health + HealthRegenRateWhenResting * DeltaTime, 0.f, MaxHealth);
+}
+
 void UAttributeComponent::SetDodgeCost(float SetStaminaDodgeCost)
 {
 	DodgeCost = SetStaminaDodgeCost;

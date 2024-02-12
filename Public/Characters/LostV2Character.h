@@ -90,6 +90,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "DeathPose")
 	ELostDeathPose LostDeathPose;
 
+	UPROPERTY(BlueprintReadOnly, Category = "RestingPose")
+	ELostRestingPose LostRestingPose;
+
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputMappingContext* LostMappingContext;
 
@@ -168,6 +171,25 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
+
+	// healing when resting 
+	UFUNCTION(BlueprintCallable)
+	void StartHealing();
+
+	UFUNCTION(BlueprintCallable)
+	void StartResting();
+
+	UFUNCTION(BlueprintCallable)
+	void StopResting();
+
+	// Rolling collision ON/OFF
+	UFUNCTION(BlueprintCallable)
+	void CharacterCollisionOnWhenDodging();
+
+	UFUNCTION(BlueprintCallable)
+	void CharacterCollisionOFFWhenDodging();
+
+	bool bIsResting = false;
 
 	// <BaseCharacter*>
 	virtual void SetWeaponCollision(ECollisionEnabled::Type CollisionEnabled) override;

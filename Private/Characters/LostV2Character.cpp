@@ -86,6 +86,10 @@ void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController
 
 void ALostV2Character::Move(const FInputActionValue& Value)
 {
+	if (bIsResting) {
+		bIsResting = false;
+		PlayMontage(HealMontage, FName("Standing"));
+	}
 	if (!IsActionStateUnoccupied() && !bCanMove) {
 		return;
 	}
@@ -215,6 +219,16 @@ void ALostV2Character::Tick(float DeltaTime)
 		Attributes->RegenStamina(DeltaTime);
 		LostOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 	}
+
+	if (bIsResting) {
+		if (ActionState == EActionState::EAS_HitReaction) {
+			bIsResting = false;
+			StopMontage(HealMontage);
+			return;
+		}
+		Attributes->RegenHealth(DeltaTime);
+		LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	}
 }
 
 void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -264,15 +278,10 @@ void ALostV2Character::Dodge()
 
 void ALostV2Character::Heal()
 {
-	// TODO :: ABP implementation of healing
 	if (HealMontage && IsActionStateUnoccupied()) {
-		if (Attributes && LostOverlay) {
-			Attributes->Heal();
-			LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-		}
-		UE_LOG(LogTemp, Warning, TEXT("Heal"));
-		ActionState = EActionState::EAS_Attacking;
+		LostRestingPose = ELostRestingPose::ELRP_Resting1;
 		PlayMontage(HealMontage, FName("Sitting"));
+		ActionState = EActionState::EAS_Resting;
 	}
 }
 
@@ -396,6 +405,33 @@ void ALostV2Character::HitReactEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 	CanMove();
+}
+
+void ALostV2Character::StartHealing()
+{
+	bIsResting = true;
+}
+
+void ALostV2Character::StartResting()
+{
+	bCanMove = false;
+}
+
+void ALostV2Character::StopResting()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+	bCanMove = true;
+}
+
+void ALostV2Character::CharacterCollisionOnWhenDodging()
+{
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
+}
+
+void ALostV2Character::CharacterCollisionOFFWhenDodging()
+{
+	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 }
 
 void ALostV2Character::SetWeaponCollision(ECollisionEnabled::Type CollisionEnabled)

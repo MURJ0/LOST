@@ -420,10 +420,12 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 	// if the enemy is alive, its not already chasing or attacking and the pawn he is detecting the playable character
 	if (ShouldChaseTarget() && SeenPawn->ActorHasTag(FName("EngageableTarget"))) {
 		CombatTarget = SeenPawn;
+
 		if (CombatTarget->ActorHasTag(TEXT("Dead"))) {
 			CombatTarget = nullptr;
 			return;
 		}
+
 		ClearPatrolTimer(); // If it reaches the target, clear the timer that's causing the enemy to stay in one position.
 		StartChasing();
 	}
