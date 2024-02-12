@@ -241,6 +241,9 @@ void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		//Dodge
 		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ALostV2Character::Dodge);
+
+		//Heal
+		EnhancedInputComponent->BindAction(HealAction, ETriggerEvent::Triggered, this, &ALostV2Character::Heal);
 	}
 }
 
@@ -256,6 +259,20 @@ void ALostV2Character::Dodge()
 	if (Attributes && LostOverlay) {
 		Attributes->UseStamina(Attributes->GetDodgeCost());
 		LostOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
+}
+
+void ALostV2Character::Heal()
+{
+	// TODO :: ABP implementation of healing
+	if (HealMontage && IsActionStateUnoccupied()) {
+		if (Attributes && LostOverlay) {
+			Attributes->Heal();
+			LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Heal"));
+		ActionState = EActionState::EAS_Attacking;
+		PlayMontage(HealMontage, FName("Sitting"));
 	}
 }
 

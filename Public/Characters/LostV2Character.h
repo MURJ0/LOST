@@ -111,6 +111,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* DodgeAction;
 
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* HealAction;
+
 	void Look(const FInputActionValue& Value);
 	void Move(const FInputActionValue& Value);
 	void Attack();
@@ -118,6 +121,7 @@ protected:
 	void EKeyPressed();
 	void SetDodgeCostForDifferentTypeOfWeapon();
 	void Dodge();
+	void Heal();
 
 	bool HasEnoughStamina();
 
@@ -140,6 +144,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* DodgeMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* HealMontage;
 
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();

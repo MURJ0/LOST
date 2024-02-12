@@ -13,6 +13,11 @@ void UAttributeComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+void UAttributeComponent::Heal()
+{
+	Health += 40.f;
+}
+
 void UAttributeComponent::ReceiveDamage(float Damage)
 {
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);

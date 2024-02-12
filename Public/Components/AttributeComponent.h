@@ -19,7 +19,7 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
-
+	
 private:
 	// current Health
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
@@ -68,4 +68,5 @@ public:
 
 	void SetDodgeCost(float SetStaminaDodgeCost);
 	void SetRegenRateCost(float SetStaminaRegenRate);
+	void Heal();
 };
