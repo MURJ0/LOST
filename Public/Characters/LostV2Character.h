@@ -100,6 +100,9 @@ protected:
 	UInputAction* MoveAction;
 
 	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* SprintAction;
+
+	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* LookAction;
 
 	UPROPERTY(EditAnywhere, Category = Input)
@@ -119,12 +122,22 @@ protected:
 
 	void Look(const FInputActionValue& Value);
 	void Move(const FInputActionValue& Value);
+	void StartSprinting();
+	void StopSprinting();
 	void Attack();
 	virtual void Jump() override;
 	void EKeyPressed();
 	void SetDodgeCostForDifferentTypeOfWeapon();
 	void Dodge();
 	void Heal();
+
+	bool bIsSpring = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	float SprintSpeed = 500.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	float WalkSpeed = 125.f;
 
 	bool HasEnoughStamina();
 
@@ -200,4 +213,6 @@ protected:
 private:
 	void InitializeLostOverlay(APlayerController* PlayerController);
 	void SetHealthHUD();
+
+
 };

@@ -101,15 +101,35 @@ void ALostV2Character::Move(const FInputActionValue& Value)
 
 			const FRotator Rotation = Controller->GetControlRotation();
 			const FRotator YawRotation(0, Rotation.Yaw, 0);
-
+			
 			const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-			AddMovementInput(ForwardDirection, MovementVector.Y);
-
 			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+			
+			AddMovementInput(ForwardDirection, MovementVector.Y);
 			AddMovementInput(RightDirection, MovementVector.X);
 		}
 	}
-	
+}
+
+void ALostV2Character::StartSprinting()
+{
+	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
+
+	if (CharacterMovementSpeed)
+	{
+		CharacterMovementSpeed->MaxWalkSpeed = SprintSpeed;
+	}
+}
+
+void ALostV2Character::StopSprinting()
+{
+	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
+
+	if (CharacterMovementSpeed)
+	{
+		// Set the maximum walking speed to walking speed
+		CharacterMovementSpeed->MaxWalkSpeed = WalkSpeed;
+	}
 }
 
 void ALostV2Character::EKeyPressed()
@@ -258,6 +278,10 @@ void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		//Heal
 		EnhancedInputComponent->BindAction(HealAction, ETriggerEvent::Triggered, this, &ALostV2Character::Heal);
+
+		//Sprint 
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ALostV2Character::StartSprinting);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ALostV2Character::StopSprinting);
 	}
 }
 
