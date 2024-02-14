@@ -22,6 +22,7 @@
 #include "Enemy/Enemy.h"
 #include "HUD/LostHUD.h"
 #include "HUD/LostOverlay.h"
+#include <Kismet/GameplayStatics.h>
 
 ALostV2Character::ALostV2Character()
 {
@@ -44,7 +45,7 @@ ALostV2Character::ALostV2Character()
 
 	CameraBoom = CreateDefaultSubobject <USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
-	CameraBoom->TargetArmLength = 400.f;
+	CameraBoom->TargetArmLength = 300.f;
 	CameraBoom->bUsePawnControlRotation = true;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
@@ -108,27 +109,6 @@ void ALostV2Character::Move(const FInputActionValue& Value)
 			AddMovementInput(ForwardDirection, MovementVector.Y);
 			AddMovementInput(RightDirection, MovementVector.X);
 		}
-	}
-}
-
-void ALostV2Character::StartSprinting()
-{
-	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
-
-	if (CharacterMovementSpeed)
-	{
-		CharacterMovementSpeed->MaxWalkSpeed = SprintSpeed;
-	}
-}
-
-void ALostV2Character::StopSprinting()
-{
-	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
-
-	if (CharacterMovementSpeed)
-	{
-		// Set the maximum walking speed to walking speed
-		CharacterMovementSpeed->MaxWalkSpeed = WalkSpeed;
 	}
 }
 
@@ -249,6 +229,144 @@ void ALostV2Character::Tick(float DeltaTime)
 		Attributes->RegenHealth(DeltaTime);
 		LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
 	}
+
+	if (CanChangeCameraBoomArmLenght())
+	{
+		ChangeCameraBoomArmLenght(DeltaTime);
+	}
+
+	if (CanChangeCameraBoomSocketOffset())
+	{
+		ChangeCameraBoomSocketOffset(DeltaTime);
+	}
+}
+
+void ALostV2Character::ChangeCameraBoomArmLenght(float DeltaTime)
+{
+	// Calculate the interpolation alpha for arm length
+	float ArmLengthAlpha = FMath::Clamp(CurrentArmLengthTime / 0.5f, 0.0f, 1.0f);
+
+	// Interpolate between the start and target arm length
+	float NewArmLength = FMath::Lerp(StartArmLength, TargetArmLength, ArmLengthAlpha);
+
+	// Update the arm length of the camera boom
+	if (CameraBoom)
+	{
+		CameraBoom->TargetArmLength = NewArmLength;
+	}
+
+	// Update the current arm length time
+	CurrentArmLengthTime += DeltaTime;
+
+	// Check if the arm length interpolation is finished
+	if (CurrentArmLengthTime >= 1.0f)
+	{
+		bIsChangingArmLength = false;
+	}
+}
+
+void ALostV2Character::ChangeCameraBoomSocketOffset(float DeltaTime)
+{
+	// Calculate interpolation alpha
+	float InterpolationAlpha = FMath::Clamp(CurrentInterpolationTime / SocketOffsetInterpolationTime, 0.0f, 1.0f);
+
+	// Interpolate between the start and target socket offset
+	FVector NewSocketOffset = FMath::Lerp(StartSocketOffset, TargetSocketOffset, InterpolationAlpha);
+
+	// Update the socket offset of the camera boom
+	if (CameraBoom)
+	{
+		CameraBoom->SocketOffset = NewSocketOffset;
+	}
+
+	// Update the current interpolation time
+	CurrentInterpolationTime += DeltaTime;
+
+	// Check if the interpolation is finished
+	if (CurrentInterpolationTime >= SocketOffsetInterpolationTime)
+	{
+		bIsChangingSocketOffset = false;
+	}
+}
+
+bool ALostV2Character::CanChangeCameraBoomSocketOffset() 
+{
+	return bIsChangingSocketOffset;
+}
+
+bool ALostV2Character::CanChangeCameraBoomArmLenght()
+{
+	return bIsChangingArmLength;
+}
+
+void ALostV2Character::ChangeCameraAngle()
+{
+	if (CameraBoom) {
+		FVector ChangedSocketOffset;
+
+		// Check the current socket offset value
+		if (CameraBoom->SocketOffset.Y > 0.0f)
+		{
+			ChangedSocketOffset = FVector(0.0f, -60.0f, 25.f); // If positive, set to negative
+		}
+		else
+		{
+			ChangedSocketOffset = FVector(0.0f, 60.0f, 25.f); // If negative or zero, set to positive
+		}
+
+		// Set the target socket offset
+		TargetSocketOffset = ChangedSocketOffset;
+
+		// Set up start and target socket offsets for interpolation
+		StartSocketOffset = CameraBoom->SocketOffset;
+
+		// Initialize interpolation variables
+		CurrentInterpolationTime = 0.0f;
+		bIsChangingSocketOffset = true;
+	}
+}
+
+void ALostV2Character::StartSprinting()
+{
+	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
+
+	if (CharacterMovementSpeed)
+	{
+		CharacterMovementSpeed->MaxWalkSpeed = SprintSpeed;
+
+		// Smoothly change the camera boom arm length to 200
+		if (CharacterMovementSpeed->Velocity.SizeSquared() > FMath::Square(0.1f) && CameraBoom) { // If the character is not moving it won't be able to zoom the camera
+			// Set up the start and target arm lengths
+			StartArmLength = 300.0f;
+			TargetArmLength = 200.0f;
+
+			// Initialize arm length interpolation variables
+			bIsChangingArmLength = true;
+			CurrentArmLengthTime = 0.0f;
+			// Initialize arm length interpolation variables
+			bIsChangingArmLength = true;
+		}
+	}
+}
+
+void ALostV2Character::StopSprinting()
+{
+	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
+
+	if (CharacterMovementSpeed)
+	{
+		// Set the maximum walking speed to walking speed
+		CharacterMovementSpeed->MaxWalkSpeed = WalkSpeed;
+		if (CameraBoom) {
+			// Set up the start and target arm lengths
+			StartArmLength = CameraBoom->TargetArmLength;
+			TargetArmLength = DefaultArmLength;
+
+			// Initialize arm length interpolation variables
+			bIsChangingArmLength = true;
+			CurrentArmLengthTime = 0.0f;
+		}
+	}
 }
 
 void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -282,6 +400,9 @@ void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		//Sprint 
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ALostV2Character::StartSprinting);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ALostV2Character::StopSprinting);
+
+		//Change camera angle
+		EnhancedInputComponent->BindAction(ChangeCamera, ETriggerEvent::Triggered, this, &ALostV2Character::ChangeCameraAngle);
 	}
 }
 

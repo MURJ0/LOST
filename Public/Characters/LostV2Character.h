@@ -120,6 +120,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* HealAction;
 
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* ChangeCamera;
+
 	void Look(const FInputActionValue& Value);
 	void Move(const FInputActionValue& Value);
 	void StartSprinting();
@@ -130,6 +133,31 @@ protected:
 	void SetDodgeCostForDifferentTypeOfWeapon();
 	void Dodge();
 	void Heal();
+	void ChangeCameraAngle();
+
+	// <CameraBoom arm lenght changes>
+	float StartArmLength = 300.f;
+	float TargetArmLength = 200.f;
+	float DefaultArmLength = 300.f;
+	bool bIsChangingArmLength = false;
+	float CurrentArmLengthTime = 0.0f;
+	// </CameraBoom arm lenght changes>
+
+	// <CameraBoom socketchanges>
+	FVector StartSocketOffset;
+	FVector TargetSocketOffset;
+	float CurrentInterpolationTime;
+	bool bIsChangingSocketOffset;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera Settings")
+	float SocketOffsetInterpolationTime;
+	// </CameraBoom socketchanges>
+
+	bool CanChangeCameraBoomSocketOffset();
+	bool CanChangeCameraBoomArmLenght();
+
+	void ChangeCameraBoomArmLenght(float DeltaTime);
+	void ChangeCameraBoomSocketOffset(float DeltaTime);
 
 	bool bIsSpring = false;
 
@@ -163,6 +191,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* HealMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* FromIdleToWlakRunMontage;
 
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();
