@@ -35,4 +35,11 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = State)
 	ELostDeathPose LostDeathPose;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
+	FVector CharacterDirection; // Character direction vector
+
+public:
+	void UpdateCharacterDirection();
 };
+

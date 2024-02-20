@@ -53,6 +53,118 @@ ALostV2Character::ALostV2Character()
 	CameraComponent->bUsePawnControlRotation = false;
 }
 
+void ALostV2Character::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (Attributes && LostOverlay) {
+		Attributes->RegenStamina(DeltaTime);
+		LostOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
+
+	if (bIsResting) {
+		if (ActionState == EActionState::EAS_HitReaction) {
+			bIsResting = false;
+			StopMontage(HealMontage);
+			return;
+		}
+		Attributes->RegenHealth(DeltaTime);
+		LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	}
+
+	if (CanChangeCameraBoomArmLenght())
+	{
+		ChangeCameraBoomArmLenght(DeltaTime);
+	}
+
+	if (CanChangeCameraBoomSocketOffset())
+	{
+		ChangeCameraBoomSocketOffset(DeltaTime);
+	}
+}
+
+void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
+	if (EnhancedInputComponent) {
+		//Moving
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALostV2Character::Move);
+
+		//Look
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ALostV2Character::Look);
+
+		//Jump
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+
+		//Equip
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ALostV2Character::EKeyPressed);
+
+		//Attack
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ALostV2Character::Attack);
+
+		//Dodge
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ALostV2Character::Dodge);
+
+		//Heal
+		EnhancedInputComponent->BindAction(HealAction, ETriggerEvent::Triggered, this, &ALostV2Character::Heal);
+
+		//Sprint 
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &ALostV2Character::StartSprinting);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ALostV2Character::StopSprinting);
+
+		//Change camera angle
+		EnhancedInputComponent->BindAction(ChangeCamera, ETriggerEvent::Triggered, this, &ALostV2Character::ChangeCameraAngle);
+	}
+}
+
+float ALostV2Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	HandleDamage(DamageAmount);
+	SetHealthHUD();
+	return DamageAmount;
+}
+
+void ALostV2Character::GetHit_Implementation(const FVector& ImpactPoint)
+{
+	Super::GetHit_Implementation(ImpactPoint);
+	
+	if (IsAlive()) { // Check if Hitter is valid and not the player character itself
+		DireactionalHitReact(ImpactPoint);
+		ActionState = EActionState::EAS_HitReaction;
+	}
+	else {
+		Die();
+	}
+
+	if (EquippedWeapon) {
+		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void ALostV2Character::SetOverlappingItem(AItem* Item)
+{
+	OverlappingItem = Item;
+}
+
+void ALostV2Character::AddSouls(ASoul* Soul)
+{
+	if (Attributes && LostOverlay) {
+		Attributes->AddSouls(Soul->GetSouls());
+		LostOverlay->SetSouls(Attributes->GetSouls());
+	}
+}
+
+void ALostV2Character::AddGold(ATreasure* Gold)
+{
+	if (Attributes && LostOverlay) {
+		Attributes->AddGold(Gold->GetGold());
+		LostOverlay->SetGold(Attributes->GetGold());
+	}
+}
+
 void ALostV2Character::BeginPlay()
 { 
 	Super::BeginPlay();
@@ -71,18 +183,30 @@ void ALostV2Character::BeginPlay()
 	Tags.Add(FName("EngageableTarget"));
 }
 
-void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController)
+void ALostV2Character::Die()
 {
-	ALostHUD* LostHUD = Cast<ALostHUD>(PlayerController->GetHUD());
-	if (LostHUD) {
-		LostOverlay = LostHUD->GetLostOverlay();
-		if (LostOverlay) {
-			LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-			LostOverlay->SetStaminaBarPercent(1.f);
-			LostOverlay->SetGold(0);
-			LostOverlay->SetGold(0);
-		}
+	ActionState = EActionState::EAS_Dead;
+	LostDeathPose = ELostDeathPose::ELDP_Death1;
+
+	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
+
+	Tags.Add(FName("Dead"));
+
+	PlayMontage(DeathMontage, FName("Death1"));
+	
+}
+
+void ALostV2Character::Look(const FInputActionValue& Value)
+{
+	const FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+		// add yaw and pitch input to controller
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
 	}
+
 }
 
 void ALostV2Character::Move(const FInputActionValue& Value)
@@ -91,6 +215,7 @@ void ALostV2Character::Move(const FInputActionValue& Value)
 		bIsResting = false;
 		PlayMontage(HealMontage, FName("Standing"));
 	}
+
 	if (!IsActionStateUnoccupied() && !bCanMove) {
 		return;
 	}
@@ -112,51 +237,61 @@ void ALostV2Character::Move(const FInputActionValue& Value)
 	}
 }
 
-void ALostV2Character::EKeyPressed()
-{ 
-	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (OverlappingWeapon) {
-		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"), this , this);
-		
-		CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
-		OverlappingItem = nullptr;
-		EquippedWeapon = OverlappingWeapon;
-		SetDodgeCostForDifferentTypeOfWeapon();
-	}
-	else if (EquippedWeapon){
-		if (IsActionStateUnoccupied() && !IsCharacterStateUnoccupied()) {
-			PlayMontage(EquipUnequipMontage, FName("Unequip"));
-			CharacterState = ECharacterState::ECS_Unequipped;
-		}
-		else if (IsActionStateUnoccupied() && IsCharacterStateUnoccupied() && EquippedWeapon != nullptr) {
-			PlayMontage(EquipUnequipMontage, FName("Equip"));
-			CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
-		}
-		ActionState = EActionState::EAS_Unoccupied;
-	}
-}
-
-void ALostV2Character::SetDodgeCostForDifferentTypeOfWeapon()
+void ALostV2Character::StartSprinting()
 {
-	if (EquippedWeapon) {
-		if (EquippedWeapon->GetWeaponType() == EWeaponType::OneHanded) {
-			Attributes->SetDodgeCost(25.f);
+	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
+	if (CharacterMovementSpeed) {
+		CharacterMovementSpeed->MaxWalkSpeed = SprintSpeed;
+		// Smoothly change the camera boom arm length to 200
+		// If the character is moving it wiil be able to zoom the camera
+		if (IsCharacterMoving(CharacterMovementSpeed)) { // if the character IS moving and holding "Sprint" key the CameraBoom arm lenght will be zoom 
+			CountCanemraLenghtBoolsForZoom++;
+			if (CountCanemraLenghtBoolsForZoom == 1) {
+				CountCanemraLenghtBoolsForZoomOUT = 0;
+				StartArmLength = 300.f;
+				TargetArmLength = 200.f;
+				bIsChangingArmLength = true;
+				CurrentArmLengthTime = 0.0f;
+			}
 		}
-
-		if (EquippedWeapon->GetWeaponType() == EWeaponType::TwoHanded) {
-			Attributes->SetDodgeCost(35.f);
+		else if(!IsCharacterMoving(CharacterMovementSpeed)) { // if the character is NOT moving but still holding the "Sprint" key the camera will zoom out 
+			CountCanemraLenghtBoolsForZoomOUT++;
+			if (CountCanemraLenghtBoolsForZoomOUT == 1) {
+				CountCanemraLenghtBoolsForZoom = 0;
+				StartArmLength = 200.f;
+				TargetArmLength = 300.f;
+				bIsChangingArmLength = true;
+				CurrentArmLengthTime = 0.0f;
+				return;
+			}
 		}
 	}
 }
 
-bool ALostV2Character::IsCharacterStateUnoccupied()
+bool ALostV2Character::IsCharacterMoving(UCharacterMovementComponent* CharacterMovementSpeed)
 {
-	return CharacterState == ECharacterState::ECS_Unequipped;
+	return CharacterMovementSpeed->Velocity.SizeSquared() > FMath::Square(0.1f);
 }
 
-bool ALostV2Character::IsActionStateUnoccupied()
+void ALostV2Character::StopSprinting()
 {
-	return ActionState == EActionState::EAS_Unoccupied;
+	CountCanemraLenghtBoolsForZoom = 0;
+	CountCanemraLenghtBoolsForZoomOUT = 0;
+	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
+	if (CharacterMovementSpeed)
+	{
+		// Set the maximum walking speed to walking speed
+		CharacterMovementSpeed->MaxWalkSpeed = WalkSpeed;
+		if (CameraBoom) { // if the character is not moving then it will reset the camera boom
+			// Set up the start and target arm lengths
+			StartArmLength = CameraBoom->TargetArmLength;
+			TargetArmLength = DefaultArmLength;
+
+			// Initialize arm length interpolation variables
+			bIsChangingArmLength = true;
+			CurrentArmLengthTime = 0.0f;
+		}
+	}
 }
 
 void ALostV2Character::Attack()
@@ -198,60 +333,114 @@ void ALostV2Character::Jump()
 	}
 }
 
-void ALostV2Character::Look(const FInputActionValue& Value)
-{
-	const FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
-	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+void ALostV2Character::EKeyPressed()
+{ 
+	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
+	if (OverlappingWeapon) {
+		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"), this , this);
+		
+		CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
+		OverlappingItem = nullptr;
+		EquippedWeapon = OverlappingWeapon;
+		SetDodgeCostForDifferentTypeOfWeapon();
 	}
-
+	else if (EquippedWeapon){
+		if (IsActionStateUnoccupied() && !IsCharacterStateUnoccupied()) {
+			PlayMontage(EquipUnequipMontage, FName("Unequip"));
+			CharacterState = ECharacterState::ECS_Unequipped;
+		}
+		else if (IsActionStateUnoccupied() && IsCharacterStateUnoccupied() && EquippedWeapon != nullptr) {
+			PlayMontage(EquipUnequipMontage, FName("Equip"));
+			CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
+		}
+		ActionState = EActionState::EAS_Unoccupied;
+	}
 }
 
-void ALostV2Character::Tick(float DeltaTime)
-{ 
-	Super::Tick(DeltaTime);
+void ALostV2Character::SetDodgeCostForDifferentTypeOfWeapon()
+{
+	if (EquippedWeapon) {
+		if (EquippedWeapon->GetWeaponType() == EWeaponType::OneHanded) {
+			Attributes->SetDodgeCost(25.f);
+		}
+
+		if (EquippedWeapon->GetWeaponType() == EWeaponType::TwoHanded) {
+			Attributes->SetDodgeCost(35.f);
+		}
+	}
+}
+
+void ALostV2Character::Dodge()
+{
+	if (!IsActionStateUnoccupied() || !HasEnoughStamina()) { return; }
+
+	if (ActionState == EActionState::EAS_Dodging) {	return;	}
+
+	ActionState = EActionState::EAS_Dodging;
+	PlayMontage(DodgeMontage, FName("Dodge")); // Plays DodgeMontage
 
 	if (Attributes && LostOverlay) {
-		Attributes->RegenStamina(DeltaTime);
+		Attributes->UseStamina(Attributes->GetDodgeCost());
 		LostOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 	}
+}
 
-	if (bIsResting) {
-		if (ActionState == EActionState::EAS_HitReaction) {
-			bIsResting = false;
-			StopMontage(HealMontage);
-			return;
+void ALostV2Character::Heal()
+{
+	if (HealMontage && IsActionStateUnoccupied()) {
+		LostRestingPose = ELostRestingPose::ELRP_Resting1;
+		PlayMontage(HealMontage, FName("Sitting"));
+		ActionState = EActionState::EAS_Resting;
+	}
+}
+
+void ALostV2Character::ChangeCameraAngle()
+{
+	if (CameraBoom) {
+		FVector ChangedSocketOffset;
+
+		// Check the current socket offset value
+		if (CameraBoom->SocketOffset.Y > 0.0f)
+		{
+			ChangedSocketOffset = FVector(0.0f, -60.0f, 25.f); // If positive, set to negative
 		}
-		Attributes->RegenHealth(DeltaTime);
-		LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-	}
+		else
+		{
+			ChangedSocketOffset = FVector(0.0f, 60.0f, 25.f); // If negative or zero, set to positive
+		}
 
-	if (CanChangeCameraBoomArmLenght())
-	{
-		ChangeCameraBoomArmLenght(DeltaTime);
-	}
+		// Set the target socket offset
+		TargetSocketOffset = ChangedSocketOffset;
 
-	if (CanChangeCameraBoomSocketOffset())
-	{
-		ChangeCameraBoomSocketOffset(DeltaTime);
+		// Set up start and target socket offsets for interpolation
+		StartSocketOffset = CameraBoom->SocketOffset;
+
+		// Initialize interpolation variables
+		CurrentInterpolationTime = 0.0f;
+		bIsChangingSocketOffset = true;
 	}
+}
+
+bool ALostV2Character::CanChangeCameraBoomSocketOffset()
+{
+	return bIsChangingSocketOffset;
+}
+
+bool ALostV2Character::CanChangeCameraBoomArmLenght()
+{
+	return bIsChangingArmLength;
 }
 
 void ALostV2Character::ChangeCameraBoomArmLenght(float DeltaTime)
 {
 	// Calculate the interpolation alpha for arm length
-	float ArmLengthAlpha = FMath::Clamp(CurrentArmLengthTime / 0.5f, 0.0f, 1.0f);
+	float ArmLengthAlpha = FMath::Clamp(CurrentArmLengthTime / CameraBoomSmoothTransition, 0.0f, 1.0f);
 
 	// Interpolate between the start and target arm length
 	float NewArmLength = FMath::Lerp(StartArmLength, TargetArmLength, ArmLengthAlpha);
-
+	
 	// Update the arm length of the camera boom
-	if (CameraBoom)
-	{
+	if (CameraBoom) {
 		CameraBoom->TargetArmLength = NewArmLength;
 	}
 
@@ -289,221 +478,25 @@ void ALostV2Character::ChangeCameraBoomSocketOffset(float DeltaTime)
 	}
 }
 
-bool ALostV2Character::CanChangeCameraBoomSocketOffset() 
-{
-	return bIsChangingSocketOffset;
-}
-
-bool ALostV2Character::CanChangeCameraBoomArmLenght()
-{
-	return bIsChangingArmLength;
-}
-
-void ALostV2Character::ChangeCameraAngle()
-{
-	if (CameraBoom) {
-		FVector ChangedSocketOffset;
-
-		// Check the current socket offset value
-		if (CameraBoom->SocketOffset.Y > 0.0f)
-		{
-			ChangedSocketOffset = FVector(0.0f, -60.0f, 25.f); // If positive, set to negative
-		}
-		else
-		{
-			ChangedSocketOffset = FVector(0.0f, 60.0f, 25.f); // If negative or zero, set to positive
-		}
-
-		// Set the target socket offset
-		TargetSocketOffset = ChangedSocketOffset;
-
-		// Set up start and target socket offsets for interpolation
-		StartSocketOffset = CameraBoom->SocketOffset;
-
-		// Initialize interpolation variables
-		CurrentInterpolationTime = 0.0f;
-		bIsChangingSocketOffset = true;
-	}
-}
-
-void ALostV2Character::StartSprinting()
-{
-	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
-
-	if (CharacterMovementSpeed)
-	{
-		CharacterMovementSpeed->MaxWalkSpeed = SprintSpeed;
-
-		// Smoothly change the camera boom arm length to 200
-		if (CharacterMovementSpeed->Velocity.SizeSquared() > FMath::Square(0.1f) && CameraBoom) { // If the character is not moving it won't be able to zoom the camera
-			// Set up the start and target arm lengths
-			StartArmLength = 300.0f;
-			TargetArmLength = 200.0f;
-
-			// Initialize arm length interpolation variables
-			bIsChangingArmLength = true;
-			CurrentArmLengthTime = 0.0f;
-			// Initialize arm length interpolation variables
-			bIsChangingArmLength = true;
-		}
-	}
-}
-
-void ALostV2Character::StopSprinting()
-{
-	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
-
-	if (CharacterMovementSpeed)
-	{
-		// Set the maximum walking speed to walking speed
-		CharacterMovementSpeed->MaxWalkSpeed = WalkSpeed;
-		if (CameraBoom) {
-			// Set up the start and target arm lengths
-			StartArmLength = CameraBoom->TargetArmLength;
-			TargetArmLength = DefaultArmLength;
-
-			// Initialize arm length interpolation variables
-			bIsChangingArmLength = true;
-			CurrentArmLengthTime = 0.0f;
-		}
-	}
-}
-
-void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
-	if (EnhancedInputComponent) {
-		//Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ALostV2Character::Move);
-
-		//Look
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ALostV2Character::Look);
-
-		//Jump
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-
-		//Equip
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ALostV2Character::EKeyPressed);
-
-		//Attack
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ALostV2Character::Attack);
-
-		//Dodge
-		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ALostV2Character::Dodge);
-
-		//Heal
-		EnhancedInputComponent->BindAction(HealAction, ETriggerEvent::Triggered, this, &ALostV2Character::Heal);
-
-		//Sprint 
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ALostV2Character::StartSprinting);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ALostV2Character::StopSprinting);
-
-		//Change camera angle
-		EnhancedInputComponent->BindAction(ChangeCamera, ETriggerEvent::Triggered, this, &ALostV2Character::ChangeCameraAngle);
-	}
-}
-
-void ALostV2Character::Dodge()
-{
-	if (!IsActionStateUnoccupied() || !HasEnoughStamina()) { return; }
-
-	if (ActionState == EActionState::EAS_Dodging) {	return;	}
-
-	ActionState = EActionState::EAS_Dodging;
-	PlayMontage(DodgeMontage, FName("Dodge")); // Plays DodgeMontage
-
-	if (Attributes && LostOverlay) {
-		Attributes->UseStamina(Attributes->GetDodgeCost());
-		LostOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-	}
-}
-
-void ALostV2Character::Heal()
-{
-	if (HealMontage && IsActionStateUnoccupied()) {
-		LostRestingPose = ELostRestingPose::ELRP_Resting1;
-		PlayMontage(HealMontage, FName("Sitting"));
-		ActionState = EActionState::EAS_Resting;
-	}
-}
-
 bool ALostV2Character::HasEnoughStamina()
 {
 	return Attributes && Attributes->GetStamina() > Attributes->GetDodgeCost();;
 }
 
-float ALostV2Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+bool ALostV2Character::IsCharacterStateUnoccupied()
 {
-	HandleDamage(DamageAmount);
-	SetHealthHUD();
-	return DamageAmount;
+	return CharacterState == ECharacterState::ECS_Unequipped;
 }
 
-void ALostV2Character::SetHealthHUD()
+bool ALostV2Character::IsActionStateUnoccupied()
 {
-	if (LostOverlay && Attributes) {
-		LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-	}
+	return ActionState == EActionState::EAS_Unoccupied;
 }
 
-void ALostV2Character::GetHit_Implementation(const FVector& ImpactPoint)
+void ALostV2Character::PlayMontage(UAnimMontage* Montage, FName SectionName)
 {
-	Super::GetHit_Implementation(ImpactPoint);
-	
-	if (IsAlive()) { // Check if Hitter is valid and not the player character itself
-		DireactionalHitReact(ImpactPoint);
-		ActionState = EActionState::EAS_HitReaction;
-	}
-	else {
-		Die();
-	}
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 
-	if (EquippedWeapon) {
-		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-}
-
-void ALostV2Character::SetOverlappingItem(AItem* Item)
-{
-	OverlappingItem = Item;
-}
-
-void ALostV2Character::AddSouls(ASoul* Soul)
-{
-	if (Attributes && LostOverlay) {
-		Attributes->AddSouls(Soul->GetSouls());
-		LostOverlay->SetSouls(Attributes->GetSouls());
-	}
-}
-
-void ALostV2Character::AddGold(ATreasure* Gold)
-{
-	if (Attributes && LostOverlay) {
-		Attributes->AddGold(Gold->GetGold());
-		LostOverlay->SetGold(Attributes->GetGold());
-	}
-}
-
-void ALostV2Character::Die()
-{
-	ActionState = EActionState::EAS_Dead;
-	LostDeathPose = ELostDeathPose::ELDP_Death1;
-
-	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
-
-	Tags.Add(FName("Dead"));
-
-	PlayMontage(DeathMontage, FName("Death1"));
-	
-}
-
-void ALostV2Character::PlayMontage(UAnimMontage *Montage, FName SectionName)
-{
-	UAnimInstance *AnimInstance = GetMesh()->GetAnimInstance();
-	
 	if (AnimInstance && Montage) {
 		AnimInstance->Montage_Play(Montage);
 		AnimInstance->Montage_JumpToSection(SectionName, Montage);
@@ -595,4 +588,25 @@ void ALostV2Character::DireactionalHitReact(const FVector& ImpactPoint)
 void ALostV2Character::PlayGetHitMontage(const FName& SectionName)
 {
 	Super::PlayGetHitMontage(SectionName);
+}
+
+void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController)
+{
+	ALostHUD* LostHUD = Cast<ALostHUD>(PlayerController->GetHUD());
+	if (LostHUD) {
+		LostOverlay = LostHUD->GetLostOverlay();
+		if (LostOverlay) {
+			LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+			LostOverlay->SetStaminaBarPercent(1.f);
+			LostOverlay->SetGold(0);
+			LostOverlay->SetGold(0);
+		}
+	}
+}
+
+void ALostV2Character::SetHealthHUD()
+{
+	if (LostOverlay && Attributes) {
+		LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	}
 }

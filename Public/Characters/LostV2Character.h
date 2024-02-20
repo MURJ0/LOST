@@ -26,25 +26,6 @@ class LOSTV2_API ALostV2Character : public ABaseCharacter, public IPickUpInterfa
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleAnywhere)
-	USpringArmComponent* CameraBoom;
-
-	UPROPERTY(VisibleAnywhere)
-	UCameraComponent* CameraComponent;
-
-	UPROPERTY(VisibleInstanceOnly)
-	AItem* OverlappingItem;
-
-	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
-
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	EActionState ActionState = EActionState::EAS_Unoccupied;
-
-	UPROPERTY()
-	ULostOverlay* LostOverlay;
-
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-	AWeapon* EquippedWeapon;
 
 public:
 	ALostV2Character();
@@ -141,6 +122,14 @@ protected:
 	float DefaultArmLength = 300.f;
 	bool bIsChangingArmLength = false;
 	float CurrentArmLengthTime = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera Settings")
+	float CameraBoomSmoothTransition;
+
+	int32 CountCanemraLenghtBoolsForZoom = 0;
+	int32 CountCanemraLenghtBoolsForZoomOUT = 0;
+
+	bool IsCharacterMoving(UCharacterMovementComponent* CharacterMovementSpeed);
 	// </CameraBoom arm lenght changes>
 
 	// <CameraBoom socketchanges>
@@ -158,8 +147,6 @@ protected:
 
 	void ChangeCameraBoomArmLenght(float DeltaTime);
 	void ChangeCameraBoomSocketOffset(float DeltaTime);
-
-	bool bIsSpring = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	float SprintSpeed = 500.f;
@@ -245,5 +232,26 @@ private:
 	void InitializeLostOverlay(APlayerController* PlayerController);
 	void SetHealthHUD();
 
+	UPROPERTY(VisibleAnywhere)
+	USpringArmComponent* CameraBoom;
 
+	UPROPERTY(VisibleAnywhere)
+	UCameraComponent* CameraComponent;
+
+	UPROPERTY(VisibleInstanceOnly)
+	AItem* OverlappingItem;
+
+	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	EActionState ActionState = EActionState::EAS_Unoccupied;
+
+	UPROPERTY()
+	ULostOverlay* LostOverlay;
+
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	AWeapon* EquippedWeapon;
+
+	// shift settings 
+	bool bIsShiftPressed = false;
 };
