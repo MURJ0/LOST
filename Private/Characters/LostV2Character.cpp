@@ -12,6 +12,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 
 #include "Item/Weapons/Weapon.h"
@@ -162,6 +163,14 @@ void ALostV2Character::AddGold(ATreasure* Gold)
 	if (Attributes && LostOverlay) {
 		Attributes->AddGold(Gold->GetGold());
 		LostOverlay->SetGold(Attributes->GetGold());
+	}
+}
+
+void ALostV2Character::AddEXP(float Value)
+{
+	if (Attributes && LostOverlay) {
+		Attributes->AddEXP(Value);
+		LostOverlay->SetEXPBarPercent(Attributes->GetSouls());
 	}
 }
 

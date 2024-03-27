@@ -30,3 +30,11 @@ void ULostOverlay::SetSouls(int32 Souls)
 	}
 }
 
+void ULostOverlay::SetEXPBarPercent(float Percent)
+{
+	if (EXPProgressBar) {
+		EXPProgressBar->SetPercent(Percent);
+	}
+}
+
+

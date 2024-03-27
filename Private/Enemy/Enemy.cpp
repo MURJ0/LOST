@@ -13,6 +13,7 @@
 #include "HUD/HealthBarComponent.h"
 
 #include "Kismet/KismetSystemLibrary.h"
+#include <Kismet/GameplayStatics.h>
 
 AEnemy::AEnemy()
 {
@@ -348,6 +349,17 @@ void AEnemy::PlayDeathMontage()
 
 void AEnemy::Die()
 {
+	isDead = true;
+
+	Tags.Add(FName("Dead"));
+
+	ALostV2Character* PlayerCharacter = Cast<ALostV2Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy is dead")); // Adjust the amount of experience points as needed
+		PlayerCharacter->AddEXP(10.f);
+	}
+
 	HideHealthBar(); // Hides the healthbar
 
 	PlayDeathMontage(); // Play random death montage

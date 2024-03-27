@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Item/Item.h"
+#include "Enemy/Enemy.h"
 #include "Weapon.generated.h"
 
 class USceneComponent;
@@ -58,6 +59,8 @@ public:
 	TArray<AActor*> IgnoreActors;
 
 	EWeaponType GetWeaponType() const { return WeaponType; }
+
+	AEnemy* EnemyActor;
 protected:
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Property")

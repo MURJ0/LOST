@@ -23,6 +23,10 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 	// </ABaseCharacter> 
 
+	bool IsDead() const
+	{
+		return isDead;
+	}
 protected:
 	virtual void BeginPlay() override;
 	
@@ -196,4 +200,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class ASoul> SoulClass;
+
+	bool isDead = false;
+
+	
+
 };
