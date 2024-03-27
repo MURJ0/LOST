@@ -23,6 +23,18 @@ void UAttributeComponent::ReceiveDamage(float Damage)
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 }
 
+void UAttributeComponent::AddXP(float AddEXP)
+{
+	if (XP + AddEXP >= MaxXP) {
+		float currEXP = (XP + AddEXP) - MaxXP;
+		XP = currEXP;
+		MaxXP += 25.f;
+		return;
+	}
+
+	XP = FMath::Clamp(XP + AddEXP, 0.f, MaxXP);
+}
+
 void UAttributeComponent::UseStamina(float StaminaCost)
 {
 	Stamina = FMath::Clamp(Stamina - StaminaCost, 0.f, MaxStamina);
@@ -36,6 +48,11 @@ float UAttributeComponent::GetHealthPercent()
 float UAttributeComponent::GetStaminaPercent()
 {
 	return Stamina / MaxStamina;
+}
+
+float UAttributeComponent::GetXPPercent()
+{
+	return XP / MaxXP;
 }
 
 void UAttributeComponent::AddGold(int32 AmountOfGold)
@@ -63,10 +80,6 @@ void UAttributeComponent::RegenHealth(float DeltaTime)
 	Health = FMath::Clamp(Health + HealthRegenRateWhenResting * DeltaTime, 0.f, MaxHealth);
 }
 
-void UAttributeComponent::AddEXP(float AddEXP)
-{
-	EXP += AddEXP;
-}
 
 void UAttributeComponent::SetDodgeCost(float SetStaminaDodgeCost)
 {

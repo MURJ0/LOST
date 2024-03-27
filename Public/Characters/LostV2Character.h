@@ -44,7 +44,7 @@ public:
 	virtual void AddSouls(class ASoul* Soul) override;
 	virtual void AddGold(class ATreasure* Gold) override;
 
-	void AddEXP(float Value);
+	void AddXP(float Value);
 
 	//FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 
@@ -230,12 +230,6 @@ protected:
 	virtual void PlayGetHitMontage(const FName& SectionName) override;
 	// </BaseCharacter*>
 	
-	UPROPERTY(VisibleAnywhere)
-	class USphereComponent* Sphere;
-
-	UFUNCTION()
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
 private:
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 1000.f;

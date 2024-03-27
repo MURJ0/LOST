@@ -166,11 +166,12 @@ void ALostV2Character::AddGold(ATreasure* Gold)
 	}
 }
 
-void ALostV2Character::AddEXP(float Value)
+void ALostV2Character::AddXP(float Value)
 {
 	if (Attributes && LostOverlay) {
-		Attributes->AddEXP(Value);
-		LostOverlay->SetEXPBarPercent(Attributes->GetSouls());
+		UE_LOG(LogTemp, Warning, TEXT("Added EXP"));
+		Attributes->AddXP(Value);
+		LostOverlay->SetXPBarPercent(Attributes->GetXPPercent());
 	}
 }
 
@@ -607,6 +608,7 @@ void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController
 		if (LostOverlay) {
 			LostOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
 			LostOverlay->SetStaminaBarPercent(1.f);
+			LostOverlay->SetXPBarPercent(Attributes->GetXPPercent());
 			LostOverlay->SetGold(0);
 			LostOverlay->SetGold(0);
 		}

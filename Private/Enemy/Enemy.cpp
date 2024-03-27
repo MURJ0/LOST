@@ -356,8 +356,7 @@ void AEnemy::Die()
 	ALostV2Character* PlayerCharacter = Cast<ALostV2Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (PlayerCharacter)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy is dead")); // Adjust the amount of experience points as needed
-		PlayerCharacter->AddEXP(10.f);
+		PlayerCharacter->AddXP(10.f);
 	}
 
 	HideHealthBar(); // Hides the healthbar

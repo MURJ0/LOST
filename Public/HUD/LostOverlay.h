@@ -13,7 +13,7 @@ public:
 
 	void SetHealthBarPercent(float Percent);
 	void SetStaminaBarPercent(float Percent);
-	void SetEXPBarPercent(float Percent);
+	void SetXPBarPercent(float Percent);
 
 	void SetGold(int32 Gold);
 	void SetSouls(int32 Souls);
@@ -27,7 +27,7 @@ private:
 	class UProgressBar* StaminaProgressBar;
 
 	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* EXPProgressBar;
+	class UProgressBar* XPProgressBar;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* GoldText;

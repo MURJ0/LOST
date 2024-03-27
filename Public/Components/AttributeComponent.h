@@ -50,17 +50,19 @@ private:
 	float HealthRegenRateWhenResting = 3.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	float EXP;
+	float XP = 0.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	float MaxHP;
+	float MaxXP = 100.f;
 
 public:
 	void ReceiveDamage(float Damage);
 	void UseStamina(float StaminaCost);
+	void AddXP(float AddEXP);
 
 	float GetHealthPercent();
 	float GetStaminaPercent();
+	float GetXPPercent();
 
 	void AddGold(int32 AmountOfGold);
 	void AddSouls(int32 AmountOfSouls);
@@ -70,13 +72,12 @@ public:
 	void RegenStamina(float DeltaTime);
 	void RegenHealth(float DeltaTime);
 
-	void AddEXP(float AddHP);
 
 	FORCEINLINE int32 GetGold() const { return Gold; }
 	FORCEINLINE int32 GetSouls() const { return Souls; }
 	FORCEINLINE float GetDodgeCost() const { return DodgeCost; }
 	FORCEINLINE float GetStamina() const { return Stamina; }
-	FORCEINLINE float GetEXP() const { return EXP; }
+	FORCEINLINE float GetEXP() const { return XP; }
 
 	void SetDodgeCost(float SetStaminaDodgeCost);
 	void SetRegenRateCost(float SetStaminaRegenRate);
