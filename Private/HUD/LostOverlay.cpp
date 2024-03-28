@@ -30,6 +30,13 @@ void ULostOverlay::SetSouls(int32 Souls)
 	}
 }
 
+void ULostOverlay::SetLevel(int32 Level)
+{
+	if (LevelText) {
+		LevelText->SetText(FText::FromString(FString::Printf(TEXT("%d"), Level)));
+	}
+}
+
 void ULostOverlay::SetXPBarPercent(float Percent)
 {
 	if (XPProgressBar) {

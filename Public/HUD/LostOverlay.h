@@ -17,7 +17,7 @@ public:
 
 	void SetGold(int32 Gold);
 	void SetSouls(int32 Souls);
-
+	void SetLevel(int32 Souls);
 private:
 
 	UPROPERTY(meta = (BindWidget))
@@ -31,6 +31,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* GoldText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* LevelText;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* SoulText;

@@ -169,10 +169,12 @@ void ALostV2Character::AddGold(ATreasure* Gold)
 void ALostV2Character::AddXP(float Value)
 {
 	if (Attributes && LostOverlay) {
-		UE_LOG(LogTemp, Warning, TEXT("Added EXP"));
 		Attributes->AddXP(Value);
 		LostOverlay->SetXPBarPercent(Attributes->GetXPPercent());
+		LostOverlay->SetLevel(Attributes->GetLevel());
 	}
+	// TODO -> input that hides and shows the overlay 
+	LostOverlay->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void ALostV2Character::BeginPlay()

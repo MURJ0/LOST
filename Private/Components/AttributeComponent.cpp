@@ -29,10 +29,18 @@ void UAttributeComponent::AddXP(float AddEXP)
 		float currEXP = (XP + AddEXP) - MaxXP;
 		XP = currEXP;
 		MaxXP += 25.f;
+		MaxHealth += 25.f;
+		MaxStamina += 25.f;
+		AddLevel();
 		return;
 	}
 
 	XP = FMath::Clamp(XP + AddEXP, 0.f, MaxXP);
+}
+
+void UAttributeComponent::AddLevel()
+{
+	Level = FMath::Clamp(Level + 1, 0.f, MaxLevel);
 }
 
 void UAttributeComponent::UseStamina(float StaminaCost)

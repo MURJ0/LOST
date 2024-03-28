@@ -55,10 +55,18 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float MaxXP = 100.f;
 
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 Level = 0;
+
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 MaxLevel = 99;
+
 public:
 	void ReceiveDamage(float Damage);
 	void UseStamina(float StaminaCost);
+
 	void AddXP(float AddEXP);
+	void AddLevel();
 
 	float GetHealthPercent();
 	float GetStaminaPercent();
@@ -78,6 +86,7 @@ public:
 	FORCEINLINE float GetDodgeCost() const { return DodgeCost; }
 	FORCEINLINE float GetStamina() const { return Stamina; }
 	FORCEINLINE float GetEXP() const { return XP; }
+	FORCEINLINE int32 GetLevel() const { return Level; }
 
 	void SetDodgeCost(float SetStaminaDodgeCost);
 	void SetRegenRateCost(float SetStaminaRegenRate);
