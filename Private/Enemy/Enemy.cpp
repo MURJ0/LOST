@@ -139,12 +139,36 @@ void AEnemy::CheckCombatTarget()
 		ClearAttackTimer();
 		LoseInterest();
 		StartPatrolling();
+
+		
+
 	}
 	else if (IsOutsideAttackRadius() && EnemyState != EEnemyState::EES_Chasing) {
 		ClearAttackTimer();
 		StartChasing();
+		NewEnemyChasing--;
+
+		// Check if all enemies have lost interest or are dead
+		if (NewEnemyChasing == 0 && NewEnemyChasing != OldEnemyChasing)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Zoom out."));
+			OldEnemyChasing = NewEnemyChasing;
+			ResetCameraZoomForAllEnemies();
+		}
 	}
 	else if (CanAttack()) {
+		NewEnemyChasing++;
+
+		if (NewEnemyChasing > 0 && NewEnemyChasing != OldEnemyChasing) {
+			OldEnemyChasing = NewEnemyChasing;
+
+			ALostV2Character* PlayerCharacter = Cast<ALostV2Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+			if (PlayerCharacter)
+			{
+				PlayerCharacter->SetHUDVisible();
+				PlayerCharacter->SetCameraZoomToBattleMode();
+			}
+		}
 		StartAttackTimer();
 	}
 }
@@ -158,6 +182,23 @@ void AEnemy::LoseInterest()
 {
 	CombatTarget = nullptr;
 	HideHealthBar();
+
+}
+
+void AEnemy::StartChasing()
+{
+	EnemyState = EEnemyState::EES_Chasing;
+	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
+	MoveToTarget(CombatTarget);
+}
+
+void AEnemy::ResetCameraZoomForAllEnemies()
+{
+	ALostV2Character* PlayerCharacter = Cast<ALostV2Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->ResetCameraZoom();
+	}
 }
 
 void AEnemy::StartPatrolling()
@@ -171,6 +212,7 @@ void AEnemy::StartPatrolling()
 		bArmed = false;
 		bDisarmed = true;
 	}
+
 }
 
 void AEnemy::ShowHealthBar()
@@ -202,12 +244,6 @@ bool AEnemy::IsInsideAttackRadius()
 	return InTargetRange(CombatTarget, AttackRadius);
 }
 
-void AEnemy::StartChasing()
-{
-	EnemyState = EEnemyState::EES_Chasing;
-	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
-	MoveToTarget(CombatTarget);
-}
 
 void AEnemy::SpawnSouls()
 {
@@ -267,6 +303,7 @@ void AEnemy::Attack()
 void AEnemy::ClearAttackTimer()
 {
 	GetWorldTimerManager().ClearTimer(AttackTimer);
+
 }
 
 void AEnemy::ClearPatrolTimer()
@@ -280,6 +317,7 @@ void AEnemy::StartAttackTimer()
 	bIsAttacking = true;
 	const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
 	GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
+
 }
 
 void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
@@ -359,6 +397,7 @@ void AEnemy::Die()
 		PlayerCharacter->AddXP(10.f);
 	}
 
+
 	HideHealthBar(); // Hides the healthbar
 
 	PlayDeathMontage(); // Play random death montage
@@ -431,7 +470,7 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
 	// if the enemy is alive, its not already chasing or attacking and the pawn he is detecting the playable character
 	if (ShouldChaseTarget() && SeenPawn->ActorHasTag(FName("EngageableTarget"))) {
 		CombatTarget = SeenPawn;
-
+		
 		if (CombatTarget->ActorHasTag(TEXT("Dead"))) {
 			CombatTarget = nullptr;
 			return;

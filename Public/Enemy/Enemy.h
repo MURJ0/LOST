@@ -58,6 +58,10 @@ protected:
 
 	virtual void SetWeaponCollision(ECollisionEnabled::Type CollisionEnabled) override;
 
+	void ResetCameraZoomForAllEnemies();
+
+	int32 NewEnemyChasing = 0;
+	int32 OldEnemyChasing = 0;
 private:
 	// Navigation
 	UPROPERTY()

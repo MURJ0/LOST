@@ -46,7 +46,8 @@ ALostV2Character::ALostV2Character()
 
 	CameraBoom = CreateDefaultSubobject <USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
-	CameraBoom->TargetArmLength = 300.f;
+	CameraBoom->TargetArmLength = 200.f;
+	CameraBoom->SocketOffset = FVector(0.0f, 60.0f, 25.f);
 	CameraBoom->bUsePawnControlRotation = true;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
@@ -118,6 +119,9 @@ void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		//Change camera angle
 		EnhancedInputComponent->BindAction(ChangeCamera, ETriggerEvent::Triggered, this, &ALostV2Character::ChangeCameraAngle);
+
+		// HUD visability
+		EnhancedInputComponent->BindAction(HUDAction, ETriggerEvent::Triggered, this, &ALostV2Character::SetHUDVisability);
 	}
 }
 
@@ -173,8 +177,32 @@ void ALostV2Character::AddXP(float Value)
 		LostOverlay->SetXPBarPercent(Attributes->GetXPPercent());
 		LostOverlay->SetLevel(Attributes->GetLevel());
 	}
-	// TODO -> input that hides and shows the overlay 
-	LostOverlay->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void ALostV2Character::SetHUDVisible()
+{
+	if (LostOverlay && LostOverlay->GetVisibility() == ESlateVisibility::Hidden) {
+		LostOverlay->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void ALostV2Character::SetCameraZoomToBattleMode()
+{
+	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
+	if (CharacterMovementSpeed) {
+		// Smoothly change the camera boom arm length to 200
+		// If the character is moving it wiil be able to zoom the camera
+		if (IsCharacterMoving(CharacterMovementSpeed)) { // if the character IS moving and holding "Sprint" key the CameraBoom arm lenght will be zoom 
+			CountCanemraLenghtBoolsForZoom++;
+			if (CountCanemraLenghtBoolsForZoom == 1) {
+				CountCanemraLenghtBoolsForZoomOUT = 0;
+				StartArmLength = 200.f;
+				TargetArmLength = 300.f;
+				bIsChangingArmLength = true;
+				CurrentArmLengthTime = 0.0f;
+			}
+		}
+	}
 }
 
 void ALostV2Character::BeginPlay()
@@ -260,8 +288,8 @@ void ALostV2Character::StartSprinting()
 			CountCanemraLenghtBoolsForZoom++;
 			if (CountCanemraLenghtBoolsForZoom == 1) {
 				CountCanemraLenghtBoolsForZoomOUT = 0;
-				StartArmLength = 300.f;
-				TargetArmLength = 200.f;
+				StartArmLength = 200.f;
+				TargetArmLength = 300.f;
 				bIsChangingArmLength = true;
 				CurrentArmLengthTime = 0.0f;
 			}
@@ -270,8 +298,8 @@ void ALostV2Character::StartSprinting()
 			CountCanemraLenghtBoolsForZoomOUT++;
 			if (CountCanemraLenghtBoolsForZoomOUT == 1) {
 				CountCanemraLenghtBoolsForZoom = 0;
-				StartArmLength = 200.f;
-				TargetArmLength = 300.f;
+				StartArmLength = 300.f;
+				TargetArmLength = 200.f;
 				bIsChangingArmLength = true;
 				CurrentArmLengthTime = 0.0f;
 				return;
@@ -280,9 +308,15 @@ void ALostV2Character::StartSprinting()
 	}
 }
 
-bool ALostV2Character::IsCharacterMoving(UCharacterMovementComponent* CharacterMovementSpeed)
+void ALostV2Character::ResetCameraZoom()
 {
-	return CharacterMovementSpeed->Velocity.SizeSquared() > FMath::Square(0.1f);
+	// Smoothly change the camera boom arm length back to default
+	StartArmLength = 300.f;
+	TargetArmLength = 200.f;
+
+	// Initialize arm length interpolation variables
+	bIsChangingArmLength = true;
+	CurrentArmLengthTime = 0.0f;
 }
 
 void ALostV2Character::StopSprinting()
@@ -304,6 +338,11 @@ void ALostV2Character::StopSprinting()
 			CurrentArmLengthTime = 0.0f;
 		}
 	}
+}
+
+bool ALostV2Character::IsCharacterMoving(UCharacterMovementComponent* CharacterMovementSpeed)
+{
+	return CharacterMovementSpeed->Velocity.SizeSquared() > FMath::Square(0.1f);
 }
 
 void ALostV2Character::Attack()
@@ -430,6 +469,21 @@ void ALostV2Character::ChangeCameraAngle()
 		// Initialize interpolation variables
 		CurrentInterpolationTime = 0.0f;
 		bIsChangingSocketOffset = true;
+	}
+}
+
+void ALostV2Character::SetHUDVisability()
+{
+	// TODO: proper if statement
+	if (LostOverlay) {
+		if (LostOverlay->GetVisibility() == ESlateVisibility::Hidden) {
+			UE_LOG(LogTemp, Warning, TEXT("HUD is visible"));
+			LostOverlay->SetVisibility(ESlateVisibility::Visible);
+		}
+		else if (LostOverlay->GetVisibility() == ESlateVisibility::Visible) {
+			UE_LOG(LogTemp, Warning, TEXT("HUD is hidden"));
+			LostOverlay->SetVisibility(ESlateVisibility::Hidden);
+		}
 	}
 }
 
@@ -613,6 +667,7 @@ void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController
 			LostOverlay->SetXPBarPercent(Attributes->GetXPPercent());
 			LostOverlay->SetGold(0);
 			LostOverlay->SetGold(0);
+			LostOverlay->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
 }

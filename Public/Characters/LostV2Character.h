@@ -57,6 +57,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	EActionState GetActionStateInControlRig() const { return ActionState; }
 
+	void SetHUDVisible();
+	void SetCameraZoomToBattleMode();
+	void ResetCameraZoom();
+
+	bool InBattle = false;
 protected:
 	int32 AttackCounter = 0;
 
@@ -106,6 +111,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* ChangeCamera;
 
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* HUDAction;
+
 	void Look(const FInputActionValue& Value);
 	void Move(const FInputActionValue& Value);
 	void StartSprinting();
@@ -117,11 +125,12 @@ protected:
 	void Dodge();
 	void Heal();
 	void ChangeCameraAngle();
+	void SetHUDVisability();
 
 	// <CameraBoom arm lenght changes>
 	float StartArmLength = 300.f;
-	float TargetArmLength = 200.f;
-	float DefaultArmLength = 300.f;
+	float TargetArmLength = 300.f;
+	float DefaultArmLength = 200.f;
 	bool bIsChangingArmLength = false;
 	float CurrentArmLengthTime = 0.0f;
 
