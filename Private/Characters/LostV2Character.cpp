@@ -53,6 +53,15 @@ ALostV2Character::ALostV2Character()
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->SetupAttachment(CameraBoom);
 	CameraComponent->bUsePawnControlRotation = false;
+
+	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	Sphere->InitSphereRadius(1000.0f); // Adjust the radius as needed
+	Sphere->SetCollisionProfileName(TEXT("OverlapAllDynamic")); // Set the collision profile to "OverlapAllDynamic"
+	Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly); // Set collision to query-only
+	Sphere->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic); // Set collision object type to world dynamic (actors)
+	Sphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore); // Ignore all collision channels
+	Sphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap); // Allow overlap with actors
+	Sphere->SetupAttachment(RootComponent);
 }
 
 void ALostV2Character::Tick(float DeltaTime)
@@ -186,10 +195,18 @@ void ALostV2Character::SetHUDVisible()
 	}
 }
 
+void ALostV2Character::SetHUDHidden()
+{
+	if (LostOverlay && LostOverlay->GetVisibility() == ESlateVisibility::Visible) {
+		LostOverlay->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
 void ALostV2Character::SetCameraZoomToBattleMode()
 {
 	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
 	if (CharacterMovementSpeed) {
+		CharacterMovementSpeed->MaxWalkSpeed = SprintSpeed;
 		// Smoothly change the camera boom arm length to 200
 		// If the character is moving it wiil be able to zoom the camera
 		if (IsCharacterMoving(CharacterMovementSpeed)) { // if the character IS moving and holding "Sprint" key the CameraBoom arm lenght will be zoom 
@@ -203,6 +220,24 @@ void ALostV2Character::SetCameraZoomToBattleMode()
 			}
 		}
 	}
+}
+
+void ALostV2Character::SetCameraZoomToDefault()
+{
+	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
+	if (CharacterMovementSpeed) {
+		CharacterMovementSpeed->MaxWalkSpeed = WalkSpeed;
+	}
+	// Smoothly change the camera boom arm length back to default
+	StartArmLength = CameraBoom->TargetArmLength;
+	TargetArmLength = DefaultArmLength;
+
+	CountCanemraLenghtBoolsForZoom = 0;
+	CountCanemraLenghtBoolsForZoomOUT = 0;
+
+	// Initialize arm length interpolation variables
+	bIsChangingArmLength = true;
+	CurrentArmLengthTime = 0.0f;
 }
 
 void ALostV2Character::BeginPlay()
@@ -221,6 +256,9 @@ void ALostV2Character::BeginPlay()
 
 	//making tag for the LostCharacter so I can use it in the PawnSeen method in enemy.cpp
 	Tags.Add(FName("EngageableTarget"));
+
+	Sphere->OnComponentBeginOverlap.AddDynamic(this, &ALostV2Character::OnOverlapBegin);
+	Sphere->OnComponentEndOverlap.AddDynamic(this, &ALostV2Character::OnOverlapEnd);
 }
 
 void ALostV2Character::Die()
@@ -308,16 +346,6 @@ void ALostV2Character::StartSprinting()
 	}
 }
 
-void ALostV2Character::ResetCameraZoom()
-{
-	// Smoothly change the camera boom arm length back to default
-	StartArmLength = 300.f;
-	TargetArmLength = 200.f;
-
-	// Initialize arm length interpolation variables
-	bIsChangingArmLength = true;
-	CurrentArmLengthTime = 0.0f;
-}
 
 void ALostV2Character::StopSprinting()
 {
@@ -477,11 +505,9 @@ void ALostV2Character::SetHUDVisability()
 	// TODO: proper if statement
 	if (LostOverlay) {
 		if (LostOverlay->GetVisibility() == ESlateVisibility::Hidden) {
-			UE_LOG(LogTemp, Warning, TEXT("HUD is visible"));
 			LostOverlay->SetVisibility(ESlateVisibility::Visible);
 		}
 		else if (LostOverlay->GetVisibility() == ESlateVisibility::Visible) {
-			UE_LOG(LogTemp, Warning, TEXT("HUD is hidden"));
 			LostOverlay->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
@@ -655,6 +681,91 @@ void ALostV2Character::PlayGetHitMontage(const FName& SectionName)
 {
 	Super::PlayGetHitMontage(SectionName);
 }
+
+//TSet<AEnemy*> OverlappingEnemies;
+//
+//void ALostV2Character::UpdateCameraAndHUD()
+//{
+//	if (OverlappingEnemies.IsEmpty())
+//	{
+//		// No enemies are overlapping
+//		UE_LOG(LogTemp, Warning, TEXT("NO Enemy in range"));
+//		SetCameraZoomToDefault();
+//		SetHUDHidden();
+//	}
+//	else if (CameraBoom->TargetArmLength == 300.f) {
+//		SetCameraZoomToBattleMode();
+//		if (LostOverlay && LostOverlay->GetVisibility() == ESlateVisibility::Hidden) {
+//			SetHUDVisible();
+//		}
+//	}
+//}
+//
+
+void ALostV2Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	NumEnemiesInSphere++;
+	UE_LOG(LogTemp, Warning, TEXT("NumEnemiesInSphere: %d"), NumEnemiesInSphere);
+	if(NumEnemiesInSphere == 2){
+		SetCameraZoomToBattleMode();
+		SetHUDVisible();
+	}
+
+	//AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+	//if (Enemy)
+	//{
+	//	// This actor is an instance of AEnemy
+	//
+	//	// Add the overlapping enemy to the set
+	//	OverlappingEnemies.Add(Enemy);
+	//
+	//	// Update camera and HUD
+	//	UpdateCameraAndHUD();
+	//}
+}
+
+void ALostV2Character::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	NumEnemiesInSphere--;
+	UE_LOG(LogTemp, Warning, TEXT("NumEnemiesInSphere: %d"), NumEnemiesInSphere);
+
+	if (NumEnemiesInSphere == 1) {
+		SetCameraZoomToDefault();
+		SetHUDHidden();
+	}
+
+	//AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+	//if (Enemy)
+	//{
+	//	// This actor is an instance of AEnemy
+	//
+	//
+	//	// Remove the overlapping enemy from the set
+	//	OverlappingEnemies.Remove(Enemy);
+	//
+	//	// Update camera and HUD
+	//	UpdateCameraAndHUD();
+	//}
+}
+
+//AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+//if (Enemy)
+//{
+//	// Do something specific when overlapping with an enemy
+//	SetCameraZoomToBattleMode();
+//	SetHUDVisible();
+//	UE_LOG(LogTemp, Warning, TEXT("Enemy in range"));
+//}
+
+
+//AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+//if (!Enemy)
+//{
+//	// Do something specific when overlapping with an enemy
+//	SetCameraZoomToDefault();
+//	SetHUDHidden();
+//	UE_LOG(LogTemp, Warning, TEXT("Enemy out of range"));
+//}
 
 void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController)
 {

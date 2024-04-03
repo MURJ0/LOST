@@ -11,6 +11,8 @@
 #include "Perception/PawnSensingComponent.h"
 #include "Components/WidgetComponent.h"
 #include "HUD/HealthBarComponent.h"
+#include "TimerManager.h"
+#include "Components/SphereComponent.h"
 
 #include "Kismet/KismetSystemLibrary.h"
 #include <Kismet/GameplayStatics.h>
@@ -58,7 +60,6 @@ void AEnemy::BeginPlay()
 
 	// equiping the weapons in the right and left hand to their correct sockets
 	EquipWeaponsAtBeginPlay();
-
 }
 
 void AEnemy::EquipWeaponsAtBeginPlay()
@@ -133,45 +134,38 @@ void AEnemy::ChackPatrolTarget()
 	}
 }
 
+
+int32 NewEnemyChasing = 0;
+
+
 void AEnemy::CheckCombatTarget()
 {
 	if (IsOutsideCombatRadius()) {
 		ClearAttackTimer();
 		LoseInterest();
 		StartPatrolling();
-
-		
-
 	}
 	else if (IsOutsideAttackRadius() && EnemyState != EEnemyState::EES_Chasing) {
 		ClearAttackTimer();
 		StartChasing();
-		NewEnemyChasing--;
-
-		// Check if all enemies have lost interest or are dead
-		if (NewEnemyChasing == 0 && NewEnemyChasing != OldEnemyChasing)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Zoom out."));
-			OldEnemyChasing = NewEnemyChasing;
-			ResetCameraZoomForAllEnemies();
-		}
 	}
 	else if (CanAttack()) {
-		NewEnemyChasing++;
-
-		if (NewEnemyChasing > 0 && NewEnemyChasing != OldEnemyChasing) {
-			OldEnemyChasing = NewEnemyChasing;
-
-			ALostV2Character* PlayerCharacter = Cast<ALostV2Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-			if (PlayerCharacter)
-			{
-				PlayerCharacter->SetHUDVisible();
-				PlayerCharacter->SetCameraZoomToBattleMode();
-			}
-		}
 		StartAttackTimer();
 	}
 }
+
+void AEnemy::ZoomOut()
+{
+	OldEnemyChasing = NewEnemyChasing;
+
+	ALostV2Character* PlayerCharacter = Cast<ALostV2Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->SetCameraZoomToDefault();
+		PlayerCharacter->SetHUDHidden();
+	}
+}
+
 
 bool AEnemy::CanAttack()
 {
@@ -190,15 +184,6 @@ void AEnemy::StartChasing()
 	EnemyState = EEnemyState::EES_Chasing;
 	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
 	MoveToTarget(CombatTarget);
-}
-
-void AEnemy::ResetCameraZoomForAllEnemies()
-{
-	ALostV2Character* PlayerCharacter = Cast<ALostV2Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	if (PlayerCharacter)
-	{
-		PlayerCharacter->ResetCameraZoom();
-	}
 }
 
 void AEnemy::StartPatrolling()
@@ -243,7 +228,6 @@ bool AEnemy::IsInsideAttackRadius()
 {
 	return InTargetRange(CombatTarget, AttackRadius);
 }
-
 
 void AEnemy::SpawnSouls()
 {

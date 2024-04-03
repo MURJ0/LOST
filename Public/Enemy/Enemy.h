@@ -58,10 +58,22 @@ protected:
 
 	virtual void SetWeaponCollision(ECollisionEnabled::Type CollisionEnabled) override;
 
-	void ResetCameraZoomForAllEnemies();
-
-	int32 NewEnemyChasing = 0;
 	int32 OldEnemyChasing = 0;
+
+	FTimerHandle TimerHandle_ZoomOut;
+	float ZoomOutDelay = 2.0f; // Adjust this value as needed
+
+	void ZoomOut();
+
+	//UPROPERTY(VisibleAnywhere)
+	//class USphereComponent* Sphere;
+	//
+	//UFUNCTION()
+	//void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	//
+	//UFUNCTION()
+	//void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 private:
 	// Navigation
 	UPROPERTY()
