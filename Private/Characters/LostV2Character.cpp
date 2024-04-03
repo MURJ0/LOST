@@ -349,21 +349,23 @@ void ALostV2Character::StartSprinting()
 
 void ALostV2Character::StopSprinting()
 {
-	CountCanemraLenghtBoolsForZoom = 0;
-	CountCanemraLenghtBoolsForZoomOUT = 0;
-	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
-	if (CharacterMovementSpeed)
-	{
-		// Set the maximum walking speed to walking speed
-		CharacterMovementSpeed->MaxWalkSpeed = WalkSpeed;
-		if (CameraBoom) { // if the character is not moving then it will reset the camera boom
-			// Set up the start and target arm lengths
-			StartArmLength = CameraBoom->TargetArmLength;
-			TargetArmLength = DefaultArmLength;
+	if (bCharacterCanStopSprinting) {
+		CountCanemraLenghtBoolsForZoom = 0;
+		CountCanemraLenghtBoolsForZoomOUT = 0;
+		UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
+		if (CharacterMovementSpeed)
+		{
+			// Set the maximum walking speed to walking speed
+			CharacterMovementSpeed->MaxWalkSpeed = WalkSpeed;
+			if (CameraBoom) { // if the character is not moving then it will reset the camera boom
+				// Set up the start and target arm lengths
+				StartArmLength = CameraBoom->TargetArmLength;
+				TargetArmLength = DefaultArmLength;
 
-			// Initialize arm length interpolation variables
-			bIsChangingArmLength = true;
-			CurrentArmLengthTime = 0.0f;
+				// Initialize arm length interpolation variables
+				bIsChangingArmLength = true;
+				CurrentArmLengthTime = 0.0f;
+			}
 		}
 	}
 }
@@ -682,90 +684,44 @@ void ALostV2Character::PlayGetHitMontage(const FName& SectionName)
 	Super::PlayGetHitMontage(SectionName);
 }
 
-//TSet<AEnemy*> OverlappingEnemies;
-//
-//void ALostV2Character::UpdateCameraAndHUD()
-//{
-//	if (OverlappingEnemies.IsEmpty())
-//	{
-//		// No enemies are overlapping
-//		UE_LOG(LogTemp, Warning, TEXT("NO Enemy in range"));
-//		SetCameraZoomToDefault();
-//		SetHUDHidden();
-//	}
-//	else if (CameraBoom->TargetArmLength == 300.f) {
-//		SetCameraZoomToBattleMode();
-//		if (LostOverlay && LostOverlay->GetVisibility() == ESlateVisibility::Hidden) {
-//			SetHUDVisible();
-//		}
-//	}
-//}
-//
-
 void ALostV2Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	NumEnemiesInSphere++;
-	UE_LOG(LogTemp, Warning, TEXT("NumEnemiesInSphere: %d"), NumEnemiesInSphere);
-	if(NumEnemiesInSphere == 2){
-		SetCameraZoomToBattleMode();
-		SetHUDVisible();
+	// If the character is overlapping with even a single enemy 
+	// the character is going into battle mode where the camera zooms out, the HUD is set to visible if its not
+	// and the character movement speed will be set to battle mode where it CAN'T walk
+	AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+	if (Enemy) {
+		NumEnemiesInSphere++;
+		UE_LOG(LogTemp, Warning, TEXT("NumEnemiesInSphere: %d"), NumEnemiesInSphere);
+		if (NumEnemiesInSphere == 1) {
+			bCharacterCanStopSprinting = false;
+			SetCameraZoomToBattleMode();
+			SetHUDVisible();
+		}
 	}
-
-	//AEnemy* Enemy = Cast<AEnemy>(OtherActor);
-	//if (Enemy)
-	//{
-	//	// This actor is an instance of AEnemy
-	//
-	//	// Add the overlapping enemy to the set
-	//	OverlappingEnemies.Add(Enemy);
-	//
-	//	// Update camera and HUD
-	//	UpdateCameraAndHUD();
-	//}
 }
 
 void ALostV2Character::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	NumEnemiesInSphere--;
-	UE_LOG(LogTemp, Warning, TEXT("NumEnemiesInSphere: %d"), NumEnemiesInSphere);
-
-	if (NumEnemiesInSphere == 1) {
-		SetCameraZoomToDefault();
-		SetHUDHidden();
+	// If the character is NOT overlapping with a single enemy 
+	// the Character is going out of battle mode where the camera goes to his default value if its not sprinting, the HUD will be hidden if its not
+	// and the character can stop sprinting
+	AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+	if (Enemy) {
+		NumEnemiesInSphere--;
+		UE_LOG(LogTemp, Warning, TEXT("NumEnemiesInSphere: %d"), NumEnemiesInSphere);
+		if (NumEnemiesInSphere == 0){
+			bCharacterCanStopSprinting = true;
+			GetWorldTimerManager().SetTimer(TimerHandle_ZoomOutAndHideHUD, this, &ALostV2Character::SetCameraZoomToDefaultAndHideHUDDelayed, ZoomOutAndHUDHiddenDelay, false);
+		}
 	}
-
-	//AEnemy* Enemy = Cast<AEnemy>(OtherActor);
-	//if (Enemy)
-	//{
-	//	// This actor is an instance of AEnemy
-	//
-	//
-	//	// Remove the overlapping enemy from the set
-	//	OverlappingEnemies.Remove(Enemy);
-	//
-	//	// Update camera and HUD
-	//	UpdateCameraAndHUD();
-	//}
 }
 
-//AEnemy* Enemy = Cast<AEnemy>(OtherActor);
-//if (Enemy)
-//{
-//	// Do something specific when overlapping with an enemy
-//	SetCameraZoomToBattleMode();
-//	SetHUDVisible();
-//	UE_LOG(LogTemp, Warning, TEXT("Enemy in range"));
-//}
-
-
-//AEnemy* Enemy = Cast<AEnemy>(OtherActor);
-//if (!Enemy)
-//{
-//	// Do something specific when overlapping with an enemy
-//	SetCameraZoomToDefault();
-//	SetHUDHidden();
-//	UE_LOG(LogTemp, Warning, TEXT("Enemy out of range"));
-//}
+void ALostV2Character::SetCameraZoomToDefaultAndHideHUDDelayed()
+{
+	SetCameraZoomToDefault();
+	SetHUDHidden();
+}
 
 void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController)
 {

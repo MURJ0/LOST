@@ -134,10 +134,6 @@ void AEnemy::ChackPatrolTarget()
 	}
 }
 
-
-int32 NewEnemyChasing = 0;
-
-
 void AEnemy::CheckCombatTarget()
 {
 	if (IsOutsideCombatRadius()) {
@@ -153,19 +149,6 @@ void AEnemy::CheckCombatTarget()
 		StartAttackTimer();
 	}
 }
-
-void AEnemy::ZoomOut()
-{
-	OldEnemyChasing = NewEnemyChasing;
-
-	ALostV2Character* PlayerCharacter = Cast<ALostV2Character>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	if (PlayerCharacter)
-	{
-		PlayerCharacter->SetCameraZoomToDefault();
-		PlayerCharacter->SetHUDHidden();
-	}
-}
-
 
 bool AEnemy::CanAttack()
 {

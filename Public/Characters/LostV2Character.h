@@ -62,11 +62,16 @@ public:
 	void SetCameraZoomToBattleMode();
 	void SetCameraZoomToDefault();
 
-	bool InBattle = false;
+	bool bCharacterCanStopSprinting = false;
 protected:
 	int32 AttackCounter = 0;
 
 	int32 NumEnemiesInSphere = 0;
+
+	FTimerHandle TimerHandle_ZoomOutAndHideHUD;
+	float ZoomOutAndHUDHiddenDelay = 1.0f; // Adjust this value as needed
+
+	void SetCameraZoomToDefaultAndHideHUDDelayed();
 
 	bool bCanMove = true;
 
