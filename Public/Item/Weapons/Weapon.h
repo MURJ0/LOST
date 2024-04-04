@@ -61,6 +61,8 @@ public:
 	EWeaponType GetWeaponType() const { return WeaponType; }
 
 	AEnemy* EnemyActor;
+
+	float GetDamage() const { return Damage; }
 protected:
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Property")

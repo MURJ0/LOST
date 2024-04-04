@@ -23,6 +23,10 @@ public:
 	// <UHitInterface> 
 	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
 	// </UHitInterface> 
+
+	UAttributeComponent* GetAttribute() const { return Attributes; }
+	bool AreAttributeNotNull() const ;
+
 protected:
 	virtual void BeginPlay() override;
 

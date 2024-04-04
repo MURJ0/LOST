@@ -4,6 +4,7 @@
 #include "HUD/HealthBarComponent.h"
 #include "HUD/HealthBar.h"
 #include "Components/ProgressBar.h"
+#include "Components/Image.h"
 #include "Components/TextBlock.h"
 
 void UHealthBarComponent::SetHealthPercent(float Percent)
@@ -14,6 +15,15 @@ void UHealthBarComponent::SetHealthPercent(float Percent)
 
 	if (HealthBarWidget && HealthBarWidget->HealthBar) {
 		HealthBarWidget->HealthBar->SetPercent(Percent);
+	}
+}
+
+void UHealthBarComponent::HideHealthBar()
+{
+	if (HealthBarWidget && HealthBarWidget->HealthBar)
+	{
+		HealthBarWidget->HealthBar->SetVisibility(ESlateVisibility::Hidden);
+		HealthBarWidget->Image->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

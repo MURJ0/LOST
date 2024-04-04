@@ -10,6 +10,16 @@ ABaseCharacter::ABaseCharacter()
 }
 
 
+bool ABaseCharacter::AreAttributeNotNull() const 
+{
+	if (Attributes) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();

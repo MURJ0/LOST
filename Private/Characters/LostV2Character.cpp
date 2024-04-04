@@ -419,8 +419,10 @@ void ALostV2Character::EKeyPressed()
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
 	if (OverlappingWeapon) {
 		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"), this , this);
-		
 		CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
+		if (Attributes) {
+			Attributes->AddDamage(OverlappingWeapon->GetDamage());
+		}
 		OverlappingItem = nullptr;
 		EquippedWeapon = OverlappingWeapon;
 		SetDodgeCostForDifferentTypeOfWeapon();
@@ -709,7 +711,6 @@ void ALostV2Character::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor*
 	if (Enemy) {
 		NumEnemiesInSphere--;
 		if (NumEnemiesInSphere == 0){
-			bCharacterCanStopSprinting = true;
 			GetWorldTimerManager().SetTimer(TimerHandle_ZoomOutAndHideHUD, this, &ALostV2Character::SetCameraZoomToDefaultAndHideHUDDelayed, ZoomOutAndHUDHiddenDelay, false);
 		}
 	}
@@ -717,6 +718,7 @@ void ALostV2Character::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor*
 
 void ALostV2Character::SetCameraZoomToDefaultAndHideHUDDelayed()
 {
+	bCharacterCanStopSprinting = true;
 	SetCameraZoomToDefault();
 	SetHUDHidden();
 }

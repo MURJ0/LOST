@@ -1,5 +1,6 @@
 #include "Item/Weapons/Weapon.h"
 #include "Characters/LostV2Character.h"
+#include "Enemy/Enemy.h"
 #include "Sound/SoundWave.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -83,8 +84,16 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		if (GetOwner()->ActorHasTag(TEXT("Enemy")) && BoxHit.GetActor()->ActorHasTag(TEXT("Enemy"))) {
 			return;
 		}
-	
-		UGameplayStatics::ApplyDamage(BoxHit.GetActor(),Damage,GetInstigator()->GetController(),this,UDamageType::StaticClass());
+		ALostV2Character* Character = Cast<ALostV2Character>(GetOwner());
+		AEnemy* Enemy = Cast<AEnemy>(GetOwner());
+		if (Character && Character->AreAttributeNotNull()) {
+			float DamageToApply = FMath::RandRange(Character->GetAttribute()->GetMinDamage(), Character->GetAttribute()->GetMaxDamage());
+			UGameplayStatics::ApplyDamage(BoxHit.GetActor(), DamageToApply, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		}
+		else if(Enemy && Enemy->AreAttributeNotNull()){
+			float DamageToApply = FMath::RandRange(Enemy->GetAttribute()->GetMinDamage(), Enemy->GetAttribute()->GetMaxDamage());
+			UGameplayStatics::ApplyDamage(BoxHit.GetActor(), DamageToApply, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		}
 		ExecuteGetHit(BoxHit);
 		CreateFields(BoxHit.ImpactPoint);
 	}
@@ -92,7 +101,6 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 
 void AWeapon::ExecuteGetHit(FHitResult& BoxHit)
 {
-
 	IHitInterface* HitInterface = Cast <IHitInterface>(BoxHit.GetActor());
 	if (HitInterface) {
 		HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint);

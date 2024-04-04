@@ -6,7 +6,6 @@
 #include "Characters/BaseCharacter.h"
 #include "Enemy.generated.h"
 
-
 UCLASS()
 class LOSTV2_API AEnemy : public ABaseCharacter
 {
@@ -27,6 +26,7 @@ public:
 	{
 		return isDead;
 	}
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -207,7 +207,4 @@ private:
 	TSubclassOf<class ASoul> SoulClass;
 
 	bool isDead = false;
-
-	
-
 };

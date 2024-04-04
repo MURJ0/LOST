@@ -19,4 +19,7 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* DamageText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* Image;
 };

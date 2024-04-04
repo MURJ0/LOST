@@ -99,6 +99,9 @@ void AEnemy::EquipWeaponsAtBeginPlay()
 		LeftHandEquippedWeapon->DeactivateEmbersEffect();
 	}
 	
+	if (Attributes && RightHandEquippedWeapon) {
+		Attributes->AddDamage(RightHandEquippedWeapon->GetDamage());
+	}
 }
 
 void AEnemy::Tick(float DeltaTime)
@@ -362,9 +365,10 @@ void AEnemy::Die()
 	{
 		PlayerCharacter->AddXP(10.f);
 	}
-
-
-	HideHealthBar(); // Hides the healthbar
+	
+	if (HealthBarWidget) {
+		HealthBarWidget->HideHealthBar();
+	}
 
 	PlayDeathMontage(); // Play random death montage
 
