@@ -16,4 +16,7 @@ class LOSTV2_API UHealthBar : public UUserWidget
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* HealthBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* DamageText;
 };

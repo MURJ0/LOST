@@ -692,7 +692,6 @@ void ALostV2Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActo
 	AEnemy* Enemy = Cast<AEnemy>(OtherActor);
 	if (Enemy) {
 		NumEnemiesInSphere++;
-		UE_LOG(LogTemp, Warning, TEXT("NumEnemiesInSphere: %d"), NumEnemiesInSphere);
 		if (NumEnemiesInSphere == 1) {
 			bCharacterCanStopSprinting = false;
 			SetCameraZoomToBattleMode();
@@ -709,7 +708,6 @@ void ALostV2Character::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor*
 	AEnemy* Enemy = Cast<AEnemy>(OtherActor);
 	if (Enemy) {
 		NumEnemiesInSphere--;
-		UE_LOG(LogTemp, Warning, TEXT("NumEnemiesInSphere: %d"), NumEnemiesInSphere);
 		if (NumEnemiesInSphere == 0){
 			bCharacterCanStopSprinting = true;
 			GetWorldTimerManager().SetTimer(TimerHandle_ZoomOutAndHideHUD, this, &ALostV2Character::SetCameraZoomToDefaultAndHideHUDDelayed, ZoomOutAndHUDHiddenDelay, false);

@@ -17,7 +17,7 @@ public:
 
 	void SetGold(int32 Gold);
 	void SetSouls(int32 Souls);
-	void SetLevel(int32 Souls);
+	void SetLevel(int32 Level);
 private:
 
 	UPROPERTY(meta = (BindWidget))

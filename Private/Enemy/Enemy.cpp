@@ -270,7 +270,6 @@ void AEnemy::Attack()
 void AEnemy::ClearAttackTimer()
 {
 	GetWorldTimerManager().ClearTimer(AttackTimer);
-
 }
 
 void AEnemy::ClearPatrolTimer()
@@ -480,6 +479,7 @@ void AEnemy::HandleDamage(float DamageAmount)
 	Super::HandleDamage(DamageAmount);
 
 	if (Attributes && HealthBarWidget) {
+		HealthBarWidget->SetDamageRecieved(DamageAmount);
 		HealthBarWidget->SetHealthPercent(Attributes->GetHealthPercent());
 	}
 }

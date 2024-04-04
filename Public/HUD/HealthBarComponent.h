@@ -15,7 +15,12 @@ class LOSTV2_API UHealthBarComponent : public UWidgetComponent
 	GENERATED_BODY()
 public:
 	void SetHealthPercent(float Percent);
+	void SetDamageRecieved(float Damage);
+
+	void ResetDamageText();
 private:
 	UPROPERTY()
 	class UHealthBar* HealthBarWidget;
+
+	FTimerHandle TimerHandle_ResetDamageText;
 };
