@@ -35,6 +35,9 @@ public:
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	void DeactivateEmbersEffect();
+
+	UPROPERTY(VisibleAnywhere, Category = Interact)
+	class UInteractComponent* InteractWidget;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

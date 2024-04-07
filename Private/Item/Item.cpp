@@ -5,6 +5,7 @@
 #include "Engine/Engine.h"
 #include "Interfaces/PickUpInterface.h"
 #include "NiagaraComponent.h"
+#include "HUD/InteractComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -25,7 +26,8 @@ AItem::AItem()
 	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Embers"));
 	ItemEffect->SetupAttachment(GetRootComponent());
 
-
+	InteractWidget = CreateDefaultSubobject<UInteractComponent>(TEXT("Interact"));
+	InteractWidget->SetupAttachment(GetRootComponent());
 }
 
 // Called when the game starts or when spawned
@@ -35,6 +37,7 @@ void AItem::BeginPlay()
 	
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSpherOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
+
 }
 
 void AItem::SpawnPickUpSystem()
@@ -78,6 +81,10 @@ void AItem::OnSpherOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 	if (PickUpInterface) {
 		PickUpInterface->SetOverlappingItem(this);
 	}
+
+	if (InteractWidget) {
+		InteractWidget->ShowInteractText();
+	}
 }
 
 void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -85,6 +92,10 @@ void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	IPickUpInterface* PickUpInterface = Cast<IPickUpInterface>(OtherActor);
 	if (PickUpInterface) {
 		PickUpInterface->SetOverlappingItem(nullptr);
+	}
+
+	if (InteractWidget) {
+		InteractWidget->HideInteractText();
 	}
 }
 

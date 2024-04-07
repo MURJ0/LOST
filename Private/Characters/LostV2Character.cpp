@@ -455,6 +455,7 @@ void ALostV2Character::EKeyPressed()
 		}
 		
 		if (OverlappingBonfire->IsBonfireActive()) {
+			OverlappingBonfire->CharacterIsResting();
 			Heal();
 			return;
 		}

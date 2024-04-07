@@ -30,6 +30,7 @@ public:
 
 	FVector GetBonfireLocation() const { return BonfireLocation; }
 
+	void CharacterIsResting();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

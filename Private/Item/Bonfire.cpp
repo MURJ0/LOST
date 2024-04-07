@@ -5,6 +5,7 @@
 #include "Particles/ParticleSystem.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "HUD/InteractComponent.h"
 #include "Characters/LostV2Character.h"
 
 ABonfire::ABonfire()
@@ -32,7 +33,13 @@ void ABonfire::ActivateBonfire()
 	bActive = true;
 	if (ItemEffect) {
 		ItemEffect->Activate();
+		InteractWidget->SetInteractText(TEXT("Use"));
 	}
+}
+
+void ABonfire::CharacterIsResting()
+{
+	InteractWidget->SetInteractText(TEXT(""));
 }
 
 void ABonfire::BeginPlay()
@@ -41,5 +48,10 @@ void ABonfire::BeginPlay()
 
 	BonfireLocation = GetActorLocation();
 	
+	if (InteractWidget) {
+		InteractWidget->SetInteractText(TEXT("Activate"));
+		InteractWidget->HideInteractText();
+	}
+
 	ItemEffect->Deactivate();
 }
