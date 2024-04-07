@@ -14,6 +14,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Item/Bonfire.h"
 
 #include "Item/Weapons/Weapon.h"
 #include "Item/Item.h"
@@ -438,6 +439,26 @@ void ALostV2Character::EKeyPressed()
 		}
 		ActionState = EActionState::EAS_Unoccupied;
 	}
+
+	AController* CharacterController = GetController();
+	ABonfire* OverlappingBonfire = Cast<ABonfire>(OverlappingItem);
+	if (OverlappingBonfire && CharacterController) {
+		if (!OverlappingBonfire->IsBonfireActive()) {
+			FVector BonfireLocation = OverlappingBonfire->GetBonfireLocation();
+			FRotator TargetRotation = (BonfireLocation - GetActorLocation()).Rotation();
+			// Keep only the Yaw rotation (rotation around the vertical axis)
+			FRotator NewRotation = FRotator(0.f, TargetRotation.Yaw, 0.f);
+			// Set the actor's rotation
+			SetActorRotation(NewRotation);
+			PlayMontage(ReachOutMontage, FName("ReachOut"));
+			return;
+		}
+		
+		if (OverlappingBonfire->IsBonfireActive()) {
+			Heal();
+			return;
+		}
+	}
 }
 
 void ALostV2Character::SetDodgeCostForDifferentTypeOfWeapon()
@@ -639,6 +660,14 @@ void ALostV2Character::HitReactEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 	CanMove();
+}
+
+void ALostV2Character::StartBonfireEffect()
+{
+	ABonfire* OverlappingBonfire = Cast<ABonfire>(OverlappingItem);
+	if (OverlappingBonfire) {
+		OverlappingBonfire->ActivateBonfire();
+	}
 }
 
 void ALostV2Character::StartHealing()

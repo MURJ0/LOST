@@ -201,6 +201,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* FromIdleToWlakRunMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ReachOutMontage;
+
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();
 
@@ -221,6 +224,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void StartBonfireEffect();
 
 	// healing when resting 
 	UFUNCTION(BlueprintCallable)
