@@ -20,7 +20,6 @@ void UInteractComponent::HideInteractText()
 {
 	if (InteractWidget && InteractWidget->InteractText)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("hidden"));
 		InteractWidget->InteractText->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
@@ -29,7 +28,6 @@ void UInteractComponent::ShowInteractText()
 {
 	if (InteractWidget && InteractWidget->InteractText)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Visible"));
 		InteractWidget->InteractText->SetVisibility(ESlateVisibility::Visible);
 	}
 }

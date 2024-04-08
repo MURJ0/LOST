@@ -26,7 +26,8 @@ class LOSTV2_API ALostV2Character : public ABaseCharacter, public IPickUpInterfa
 {
 	GENERATED_BODY()
 
-
+	//TODO: enhanced input that focus the enemy in the battle mode sphere with widget image (".") on the enemy. Echo must be facing only the enemy this enemy
+	// Like souls like games
 public:
 	ALostV2Character();
 	virtual void Tick(float DeltaTime) override;
@@ -62,7 +63,7 @@ public:
 	void SetCameraZoomToBattleMode();
 	void SetCameraZoomToDefault();
 
-	bool bCharacterCanStopSprinting = false;
+	bool bIsCharacterInBattleMode = false;
 protected:
 	int32 AttackCounter = 0;
 

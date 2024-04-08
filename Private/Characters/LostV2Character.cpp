@@ -15,6 +15,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Item/Bonfire.h"
+#include "HUD/InteractComponent.h"
 
 #include "Item/Weapons/Weapon.h"
 #include "Item/Item.h"
@@ -207,6 +208,7 @@ void ALostV2Character::SetCameraZoomToBattleMode()
 {
 	UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
 	if (CharacterMovementSpeed) {
+		bIsCharacterInBattleMode = true;
 		CharacterMovementSpeed->MaxWalkSpeed = SprintSpeed;
 		// Smoothly change the camera boom arm length to 200
 		// If the character is moving it wiil be able to zoom the camera
@@ -347,10 +349,9 @@ void ALostV2Character::StartSprinting()
 	}
 }
 
-
 void ALostV2Character::StopSprinting()
 {
-	if (bCharacterCanStopSprinting) {
+	if (!bIsCharacterInBattleMode) {
 		CountCanemraLenghtBoolsForZoom = 0;
 		CountCanemraLenghtBoolsForZoomOUT = 0;
 		UCharacterMovementComponent* CharacterMovementSpeed = GetCharacterMovement();
@@ -418,7 +419,7 @@ void ALostV2Character::Jump()
 void ALostV2Character::EKeyPressed()
 { 
 	AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (OverlappingWeapon) {
+	if (OverlappingWeapon && !EquippedWeapon) {
 		OverlappingWeapon->Equip(GetMesh(), FName("RightHandSocket"), this , this);
 		CharacterState = ECharacterState::ECS_EquipedOneHandedWeapon;
 		if (Attributes) {
@@ -455,7 +456,7 @@ void ALostV2Character::EKeyPressed()
 		}
 		
 		if (OverlappingBonfire->IsBonfireActive()) {
-			OverlappingBonfire->CharacterIsResting();
+			OverlappingBonfire->InteractWidget->HideInteractText();
 			Heal();
 			return;
 		}
@@ -716,6 +717,7 @@ void ALostV2Character::PlayGetHitMontage(const FName& SectionName)
 	Super::PlayGetHitMontage(SectionName);
 }
 
+
 void ALostV2Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// If the character is overlapping with even a single enemy 
@@ -725,7 +727,6 @@ void ALostV2Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActo
 	if (Enemy) {
 		NumEnemiesInSphere++;
 		if (NumEnemiesInSphere == 1) {
-			bCharacterCanStopSprinting = false;
 			SetCameraZoomToBattleMode();
 			SetHUDVisible();
 		}
@@ -748,10 +749,12 @@ void ALostV2Character::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor*
 
 void ALostV2Character::SetCameraZoomToDefaultAndHideHUDDelayed()
 {
-	bCharacterCanStopSprinting = true;
+	bIsCharacterInBattleMode = false;
 	SetCameraZoomToDefault();
 	SetHUDHidden();
 }
+
+
 
 void ALostV2Character::InitializeLostOverlay(APlayerController* PlayerController)
 {

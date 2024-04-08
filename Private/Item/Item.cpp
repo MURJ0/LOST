@@ -81,10 +81,6 @@ void AItem::OnSpherOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 	if (PickUpInterface) {
 		PickUpInterface->SetOverlappingItem(this);
 	}
-
-	if (InteractWidget) {
-		InteractWidget->ShowInteractText();
-	}
 }
 
 void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -92,10 +88,6 @@ void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	IPickUpInterface* PickUpInterface = Cast<IPickUpInterface>(OtherActor);
 	if (PickUpInterface) {
 		PickUpInterface->SetOverlappingItem(nullptr);
-	}
-
-	if (InteractWidget) {
-		InteractWidget->HideInteractText();
 	}
 }
 

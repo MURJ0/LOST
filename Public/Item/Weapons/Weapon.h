@@ -48,6 +48,7 @@ class LOSTV2_API AWeapon : public AItem
 	UPROPERTY(EditAnywhere, Category = "Weapon Property")
 	bool bShowBoxDebug = false;
 
+	bool bIsEquipped = false;
 public:
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;

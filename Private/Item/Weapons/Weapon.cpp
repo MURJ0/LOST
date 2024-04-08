@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/BoxComponent.h"
+#include "HUD/InteractComponent.h"
 #include "Interfaces/HitInterface.h"
 #include "NiagaraComponent.h"
 
@@ -33,10 +34,19 @@ void AWeapon::BeginPlay()
 	Super::BeginPlay();
 
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
+
+	if (InteractWidget) {
+		InteractWidget->SetInteractText(TEXT("Pick up"));
+		InteractWidget->HideInteractText();
+	}
 }
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
+	if (InteractWidget) {
+		InteractWidget->HideInteractText();
+	}
+	bIsEquipped = true;
 	SetOwner(NewOwner);
 	SetInstigator(NewInstigator);
 	if (EquipSound)
@@ -59,11 +69,21 @@ void AWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocke
 void AWeapon::OnSpherOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnSpherOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+
+	ALostV2Character* Character = Cast<ALostV2Character>(OtherActor);
+	if (Character && InteractWidget && !bIsEquipped) {
+		InteractWidget->ShowInteractText();
+	}
 }
 
 void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) 
 {
 	Super::OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
+
+	ALostV2Character* Character = Cast<ALostV2Character>(OtherActor);
+	if (Character && InteractWidget) {
+		InteractWidget->HideInteractText();
+	}
 }
 
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
