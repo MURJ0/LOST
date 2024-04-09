@@ -26,6 +26,7 @@
 #include "HUD/LostHUD.h"
 #include "HUD/LostOverlay.h"
 #include <Kismet/GameplayStatics.h>
+#include <Characters/LostAnimInstance.h>
 
 ALostV2Character::ALostV2Character()
 {
@@ -102,6 +103,9 @@ void ALostV2Character::Tick(float DeltaTime)
 		}
 
 		if (ClosestEnemy) {
+			if (ClosestEnemy->IsDead()) {
+				bIsCharacterLockedOnTheClosestEnemy = false;
+			}
 			// Get the location of the closest enemy
 			FVector EnemyLocation = ClosestEnemy->GetActorLocation();
 
@@ -113,9 +117,9 @@ void ALostV2Character::Tick(float DeltaTime)
 
 			// Set the character's control rotation to face the enemy
 			if (Controller) {
-				UE_LOG(LogTemp, Warning, TEXT("There is controller"));
 				Controller->SetControlRotation(TargetRotation);
 			}
+			SetActorRotation(TargetRotation);
 		}
 	}
 }
@@ -296,6 +300,11 @@ void ALostV2Character::BeginPlay()
 		InitializeLostOverlay(PlayerController);
 	}
 
+	AnimInstanceForMovement = Cast<ULostAnimInstance>(GetMesh()->GetAnimInstance());
+	if (AnimInstanceForMovement) {
+		UE_LOG(LogTemp, Warning, TEXT("There is an anim instance"));
+	}
+
 	//making tag for the LostCharacter so I can use it in the PawnSeen method in enemy.cpp
 	Tags.Add(FName("EngageableTarget"));
 
@@ -318,7 +327,6 @@ void ALostV2Character::Die()
 
 void ALostV2Character::Look(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("LOOK"));
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
@@ -345,13 +353,56 @@ void ALostV2Character::Move(const FInputActionValue& Value)
 	else {
 		const FVector2D MovementVector = Value.Get< FVector2D>();
 		if (Controller) {
-
 			const FRotator Rotation = Controller->GetControlRotation();
 			const FRotator YawRotation(0, Rotation.Yaw, 0);
-			
+
 			const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-			
+			if (!bIsCharacterLockedOnTheClosestEnemy) {
+				AddMovementInput(ForwardDirection, MovementVector.Y);
+				AddMovementInput(RightDirection, MovementVector.X);
+			}
+			else if(bIsCharacterLockedOnTheClosestEnemy) {
+				// Calculate movement input in world space
+				const FVector MovementInput = MovementVector.X * RightDirection + MovementVector.Y * ForwardDirection;
+
+				// Calculate the dot product between the character's forward vector and the movement input
+				const float ForwardDotProduct = FVector::DotProduct(ForwardDirection, MovementInput);
+				const float RightDotProduct = FVector::DotProduct(RightDirection, MovementInput);
+
+				// Determine the relative movement direction
+				//bool bIsMovingForward = ForwardDotProduct > 0.5f;
+				//bool bIsMovingBackward = ForwardDotProduct < -0.5f;
+				//bool bIsMovingRight = RightDotProduct > 0.5f;
+				//bool bIsMovingLeft = RightDotProduct < -0.5f;
+
+				if (AnimInstanceForMovement) {
+					AnimInstanceForMovement->SetForwardDotProduct(ForwardDotProduct);
+					AnimInstanceForMovement->SetRightDotProduct(RightDotProduct);
+				}
+
+				// Store the movement direction for later use
+				//if (bIsMovingForward) {
+				//	
+				//	UE_LOG(LogTemp, Warning, TEXT("Forward direction"));
+				//	//MovementDirection = EMovementDirection::Forward;
+				//}
+				//else if (bIsMovingBackward) {
+				//	UE_LOG(LogTemp, Warning, TEXT("Backward direction"));
+				//	//MovementDirection = EMovementDirection::Backward;
+				//}
+				//else if (bIsMovingRight) {
+				//	UE_LOG(LogTemp, Warning, TEXT("Right direction"));
+				//	//MovementDirection = EMovementDirection::Right;
+				//}
+				//else if (bIsMovingLeft) {
+				//	UE_LOG(LogTemp, Warning, TEXT("Left direction"));
+				//	//MovementDirection = EMovementDirection::Left;
+				//}
+				//else {
+				//	//MovementDirection = EMovementDirection::None;
+				//}
+			}
 			AddMovementInput(ForwardDirection, MovementVector.Y);
 			AddMovementInput(RightDirection, MovementVector.X);
 		}
@@ -610,10 +661,9 @@ void ALostV2Character::LockTarget()
 		// If a closest enemy is found, initiate lock-on with it
 		if (ClosestEnemy) {
 			bIsCharacterLockedOnTheClosestEnemy = true;
-			UE_LOG(LogTemp,Warning,TEXT("CAN find the closest enemy"));
 		}
 		else {
-			UE_LOG(LogTemp, Warning, TEXT("CAN'T fiund the closest enemy"));
+
 		}
 	}
 }

@@ -66,6 +66,8 @@ public:
 	bool bIsCharacterInBattleMode = false;
 
 	bool IsCameraRotatingWithCharacter();
+
+	bool IsCharacterLockedOnTheClosestEnemy() const { return bIsCharacterLockedOnTheClosestEnemy; }
 protected:
 	TArray<AEnemy*> DetectedEnemies; // Declare an array to store detected enemies
 	AEnemy* ClosestEnemy = nullptr;
@@ -277,6 +279,7 @@ protected:
 	int EnemyInSpehere = 0;
 	int EnemyInTheEndOfTheSphere = 0;
 
+	class ULostAnimInstance* AnimInstanceForMovement;
 private:
 	UPROPERTY(EditAnywhere)
 	double CombatRadius = 1000.f;

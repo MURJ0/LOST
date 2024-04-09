@@ -37,9 +37,17 @@ public:
 	ELostDeathPose LostDeathPose;
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
-	FVector CharacterDirection; // Character direction vector
+	float ForwardDotProduct; // Forward dot product value
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
+	float RightDotProduct; // Right dot product value
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement)
+	float MovementDirection; // Movement direction (0: forward, 1: right, 2: backward, 3: left)
 
 public:
+	void SetForwardDotProduct(float Value);
+	void SetRightDotProduct(float Value);
 	void UpdateCharacterDirection();
 };
 
