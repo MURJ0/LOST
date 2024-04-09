@@ -47,14 +47,14 @@ ALostV2Character::ALostV2Character()
 	GetMesh()->SetGenerateOverlapEvents(true);
 
 	CameraBoom = CreateDefaultSubobject <USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(GetRootComponent());
+	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 200.f;
 	CameraBoom->SocketOffset = FVector(0.0f, 60.0f, 25.f);
 	CameraBoom->bUsePawnControlRotation = true;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->SetupAttachment(CameraBoom);
-	CameraComponent->bUsePawnControlRotation = false;
+	CameraComponent->bUsePawnControlRotation = true;
 
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	Sphere->InitSphereRadius(1000.0f); // Adjust the radius as needed
@@ -94,6 +94,42 @@ void ALostV2Character::Tick(float DeltaTime)
 	{
 		ChangeCameraBoomSocketOffset(DeltaTime);
 	}
+
+	if (bIsCharacterLockedOnTheClosestEnemy) {
+		if (DetectedEnemies.Num() == 0) {
+			ClosestEnemy = nullptr;
+			bIsCharacterLockedOnTheClosestEnemy = false;
+		}
+
+		if (ClosestEnemy) {
+			// Get the location of the closest enemy
+			FVector EnemyLocation = ClosestEnemy->GetActorLocation();
+
+			// Calculate the direction from the character to the closest enemy
+			FVector DirectionToEnemy = (EnemyLocation - GetActorLocation()).GetSafeNormal();
+
+			// Get the rotation that points towards the enemy
+			FRotator TargetRotation = DirectionToEnemy.Rotation();
+
+			// Set the character's control rotation to face the enemy
+			if (Controller) {
+				UE_LOG(LogTemp, Warning, TEXT("There is controller"));
+				Controller->SetControlRotation(TargetRotation);
+			}
+		}
+	}
+}
+
+bool ALostV2Character::IsCameraRotatingWithCharacter()
+{
+	// Get the rotation of the root component
+	FRotator RootRotation = GetRootComponent()->GetComponentRotation();
+
+	// Get the rotation of the camera component
+	FRotator CameraRotation = CameraBoom->GetComponentRotation(); // Assuming CameraComponent is your camera component
+
+	// Compare the rotation of the root component and the camera component
+	return RootRotation.Equals(CameraRotation, 1e-3f); // You can adjust the tolerance (1e-3f) as needed
 }
 
 void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -133,6 +169,9 @@ void ALostV2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		// HUD visability
 		EnhancedInputComponent->BindAction(HUDAction, ETriggerEvent::Triggered, this, &ALostV2Character::SetHUDVisability);
+
+		// Lock target
+		EnhancedInputComponent->BindAction(LockTargetAction, ETriggerEvent::Triggered, this, &ALostV2Character::LockTarget);
 	}
 }
 
@@ -279,6 +318,7 @@ void ALostV2Character::Die()
 
 void ALostV2Character::Look(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Warning, TEXT("LOOK"));
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
@@ -540,6 +580,44 @@ void ALostV2Character::SetHUDVisability()
 	}
 }
 
+void ALostV2Character::LockTarget()
+{
+	if (bIsCharacterLockedOnTheClosestEnemy) {
+		bIsCharacterLockedOnTheClosestEnemy = false;
+		return;
+	}
+
+	if (DetectedEnemies.Num() > 0) {
+		// Initialize variables to store the closest enemy and its distance
+		float ClosestDistanceSquared = MAX_FLT;
+
+		// Iterate through all detected enemies
+		for (AEnemy* Enemy : DetectedEnemies) {
+			if (Enemy) {
+				// Calculate the squared distance between the player and the enemy
+				FVector PlayerLocation = GetActorLocation();
+				FVector EnemyLocation = Enemy->GetActorLocation();
+				float DistanceSquared = FVector::DistSquared(PlayerLocation, EnemyLocation);
+
+				// If this enemy is closer than the previous closest enemy, update the closest enemy and distance
+				if (DistanceSquared < ClosestDistanceSquared) {
+					ClosestEnemy = Enemy;
+					ClosestDistanceSquared = DistanceSquared;
+				}
+			}
+		}
+
+		// If a closest enemy is found, initiate lock-on with it
+		if (ClosestEnemy) {
+			bIsCharacterLockedOnTheClosestEnemy = true;
+			UE_LOG(LogTemp,Warning,TEXT("CAN find the closest enemy"));
+		}
+		else {
+			UE_LOG(LogTemp, Warning, TEXT("CAN'T fiund the closest enemy"));
+		}
+	}
+}
+
 bool ALostV2Character::CanChangeCameraBoomSocketOffset()
 {
 	return bIsChangingSocketOffset;
@@ -684,7 +762,13 @@ void ALostV2Character::StartResting()
 
 void ALostV2Character::StopResting()
 {
-	ActionState = EActionState::EAS_Unoccupied;
+	ActionState = EActionState::EAS_Unoccupied; 
+	
+	ABonfire* OverlappingBonfire = Cast<ABonfire>(OverlappingItem);
+	if (OverlappingBonfire) {
+		OverlappingBonfire->InteractWidget->ShowInteractText();
+	}
+	
 	bCanMove = true;
 }
 
@@ -717,7 +801,6 @@ void ALostV2Character::PlayGetHitMontage(const FName& SectionName)
 	Super::PlayGetHitMontage(SectionName);
 }
 
-
 void ALostV2Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// If the character is overlapping with even a single enemy 
@@ -725,6 +808,9 @@ void ALostV2Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActo
 	// and the character movement speed will be set to battle mode where it CAN'T walk
 	AEnemy* Enemy = Cast<AEnemy>(OtherActor);
 	if (Enemy) {
+		// add the enemy to the array of detected enemies
+		DetectedEnemies.AddUnique(Enemy);
+		
 		NumEnemiesInSphere++;
 		if (NumEnemiesInSphere == 1) {
 			SetCameraZoomToBattleMode();
@@ -740,6 +826,9 @@ void ALostV2Character::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor*
 	// and the character can stop sprinting
 	AEnemy* Enemy = Cast<AEnemy>(OtherActor);
 	if (Enemy) {
+		// Remove the enemy from the array
+		DetectedEnemies.Remove(Enemy);
+		
 		NumEnemiesInSphere--;
 		if (NumEnemiesInSphere == 0){
 			GetWorldTimerManager().SetTimer(TimerHandle_ZoomOutAndHideHUD, this, &ALostV2Character::SetCameraZoomToDefaultAndHideHUDDelayed, ZoomOutAndHUDHiddenDelay, false);

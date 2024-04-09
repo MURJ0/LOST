@@ -64,7 +64,14 @@ public:
 	void SetCameraZoomToDefault();
 
 	bool bIsCharacterInBattleMode = false;
+
+	bool IsCameraRotatingWithCharacter();
 protected:
+	TArray<AEnemy*> DetectedEnemies; // Declare an array to store detected enemies
+	AEnemy* ClosestEnemy = nullptr;
+	bool bIsCharacterLockedOnTheClosestEnemy = false;
+	float RotationInterpSpeed = 10.0f;
+
 	int32 AttackCounter = 0;
 
 	int32 NumEnemiesInSphere = 0;
@@ -123,6 +130,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* HUDAction;
 
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* LockTargetAction;
+
 	void Look(const FInputActionValue& Value);
 	void Move(const FInputActionValue& Value);
 	void StartSprinting();
@@ -135,6 +145,7 @@ protected:
 	void Heal();
 	void ChangeCameraAngle();
 	void SetHUDVisability();
+	void LockTarget();
 
 	// <CameraBoom arm lenght changes>
 	float StartArmLength = 300.f;
@@ -272,7 +283,7 @@ private:
 
 	void InitializeLostOverlay(APlayerController* PlayerController);
 	void SetHealthHUD();
-
+	
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* CameraBoom;
 
